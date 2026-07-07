@@ -1,0 +1,57 @@
+{
+  "name": "@ghion-finances/node-sdk",
+  "version": "1.0.0",
+  "description": "Node.js SDK for Ghion Finances payment gateway with Express.js integration",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ghion",
+    "finances",
+    "payment",
+    "gateway",
+    "sdk",
+    "express",
+    "ethiopia",
+    "mobile-money",
+    "telebirr",
+    "m-pesa"
+  ],
+  "author": "Ghion Finances",
+  "license": "MIT",
+  "type": "commonjs",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ghion-finances/node-sdk"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.63.0",
+    "@typescript-eslint/parser": "^8.63.0",
+    "dotenv": "^17.4.2",
+    "eslint": "^10.6.0",
+    "express": "^5.2.1",
+    "prettier": "^3.9.4",
+    "ts-jest": "^29.4.11",
+    "typescript": "^6.0.3"
+  }
+}
