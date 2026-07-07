@@ -1,6 +1,6 @@
-# @ghion-finances/express-sdk
+# @ghion-finances/node-sdk
 
-A type-safe Node.js SDK for Ghion Finances payment gateway with Express.js integration. Built with TypeScript for maximum reliability and developer experience.
+A type-safe Node.js SDK for Ghion Finances payment gateway. Built with TypeScript for maximum reliability and developer experience.
 
 ## Features
 
