@@ -14,7 +14,6 @@ describe('GhionClient', () => {
       apiKey: 'test-api-key',
       apiSecret: 'secret123',
       passphrase: 'test-passphrase',
-      mode: 'test',
     });
   });
 
@@ -37,11 +36,6 @@ describe('GhionClient', () => {
   describe('Instantiation', () => {
     it('should create a client instance', () => {
       expect(client).toBeInstanceOf(GhionClient);
-    });
-
-    it('should return test mode configuration', () => {
-      const config = client.getConfig();
-      expect(config.mode).toBe('test');
     });
 
     it('should throw error for empty apiKey', () => {

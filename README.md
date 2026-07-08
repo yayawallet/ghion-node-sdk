@@ -27,7 +27,6 @@ const client = new GhionClient({
   apiKey: process.env.GHION_API_KEY,
   apiSecret: process.env.GHION_API_SECRET,
   passphrase: process.env.GHION_API_PASSPHRASE,
-  mode: 'test', // Use 'live' for production
 });
 
 // Initialize a payment
@@ -63,7 +62,6 @@ const client = new GhionClient({
   passphrase: 'your-passphrase',
   baseUrl: 'https://ghion.financial/api/v1', // Optional, defaults to production
   timeout: 30000, // Optional, request timeout in ms
-  mode: 'test', // 'test' or 'live'
 });
 ```
 
@@ -255,7 +253,6 @@ const client = new GhionClient({
   apiKey: process.env.GHION_API_KEY,
   apiSecret: process.env.GHION_API_SECRET,
   passphrase: process.env.GHION_API_PASSPHRASE,
-  mode: 'test',
 });
 
 const app = express();
@@ -362,6 +359,17 @@ These tests verify:
 - Payment status retrieval
 - Webhook signature verification with real credentials
 
+### Testing with cURL
+
+For manual testing with cURL commands, see [curl-commands.md](./examples/curl-commands.md). This guide includes:
+
+- Payment initialization
+- Payment submission
+- Payment status checking
+- Webhook testing
+- Complete test flow scripts
+- PowerShell equivalents
+
 ### Examples
 
 See the `examples/` directory for complete working examples:
@@ -369,7 +377,7 @@ See the `examples/` directory for complete working examples:
 - `quick-start.ts` - Basic SDK usage without Express
 - `express-server.ts` - Complete Express.js integration with webhooks
 
-For detailed information about each example, see [examples/README.md](examples/README.md)
+For detailed information about each example, see [README.md](./examples/README.md)
 
 Run examples:
 

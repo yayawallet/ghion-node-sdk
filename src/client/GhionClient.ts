@@ -36,7 +36,6 @@ export class GhionClient {
   private readonly passphrase: string;
   private readonly baseUrl: string;
   private readonly timeout: number;
-  private readonly mode: 'test' | 'live';
 
   constructor(config: GhionConfig) {
     // Validate configuration
@@ -49,7 +48,6 @@ export class GhionClient {
     this.passphrase = config.passphrase;
     this.baseUrl = config.baseUrl || 'https://ghion.financial/api/v1';
     this.timeout = config.timeout || 30000;
-    this.mode = config.mode || 'test';
   }
 
   /**
@@ -224,18 +222,4 @@ export class GhionClient {
     }
   }
 
-  /**
-   * Get client configuration (useful for debugging)
-   */
-  getConfig(): {
-    baseUrl: string;
-    mode: 'test' | 'live';
-    timeout: number;
-  } {
-    return {
-      baseUrl: this.baseUrl,
-      mode: this.mode,
-      timeout: this.timeout,
-    };
-  }
 }

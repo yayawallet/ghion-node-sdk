@@ -81,6 +81,18 @@ curl -X POST http://localhost:3000/api/payments/initialize \
 curl http://localhost:3000/api/payments/{paymentId}/status
 ```
 
+## Testing with cURL
+
+For comprehensive cURL commands to test all SDK use cases, see [curl-commands.md](curl-commands.md). This guide includes:
+
+- Payment initialization
+- Payment submission
+- Payment status checking
+- Webhook testing
+- Complete test flow scripts
+- PowerShell equivalents
+- Error handling examples
+
 ## Environment Variables
 
 All examples use the following environment variables (defined in `.env`):

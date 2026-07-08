@@ -20,7 +20,6 @@ const client = new GhionClient({
   apiKey: process.env.GHION_API_KEY || 'your-api-key',
   apiSecret: process.env.GHION_API_SECRET || 'your-api-secret',
   passphrase: process.env.GHION_API_PASSPHRASE || 'your-passphrase',
-  mode: 'test',
 });
 
 const app = express();
