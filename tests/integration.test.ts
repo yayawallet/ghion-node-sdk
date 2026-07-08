@@ -33,7 +33,6 @@ describe('GhionClient Integration Tests', () => {
       apiKey,
       apiSecret,
       passphrase,
-      mode: 'test',
     });
   });
 

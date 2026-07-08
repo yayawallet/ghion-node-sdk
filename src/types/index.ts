@@ -7,7 +7,6 @@ export interface GhionConfig {
   passphrase: string;
   baseUrl?: string;
   timeout?: number;
-  mode?: 'test' | 'live';
 }
 
 /**
@@ -38,7 +37,6 @@ export interface InitializePaymentResponse {
   available_channels?: PaymentChannel[];
   expires_at: string;
   created_at: string;
-  mode?: string;
   providers?: any[];
   card_enabled?: boolean;
   other_enabled?: boolean;

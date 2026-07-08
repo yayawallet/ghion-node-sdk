@@ -11,7 +11,6 @@
  *   apiKey: 'your-api-key',
  *   apiSecret: 'your-api-secret',
  *   passphrase: 'your-passphrase',
- *   mode: 'test'
  * });
  * ```
  */

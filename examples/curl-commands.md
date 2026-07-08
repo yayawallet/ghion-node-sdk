@@ -11,22 +11,6 @@ npx ts-node examples/express-server.ts
 
 2. The server will run on `http://localhost:3000`
 
-## Health Check
-
-Check if the server is running:
-
-```bash
-curl http://localhost:3000/health
-```
-
-**Expected Response:**
-```json
-{
-  "status": "ok",
-  "timestamp": "2024-01-01T12:00:00.000Z"
-}
-```
-
 ---
 
 ## 1. Initialize Payment
@@ -310,7 +294,7 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/payments/$paymentId/submit" -M
 
 ### Invalid API Key
 - Verify your credentials in `examples/.env`
-- Ensure you're using test mode credentials
+- Ensure you're using the correct credentials
 
 ### Payment Submission Fails
 - The phone number must be registered with the payment provider
