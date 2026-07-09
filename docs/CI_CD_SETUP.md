@@ -90,17 +90,16 @@ You need to configure the following secrets in your GitHub repository:
 
 The CI/CD pipeline runs on:
 
-### On Push
-- **Branches:** `main`, `develop`
-- **Actions:** Runs unit tests and integration tests
+### On Push to Main
+- **Branch:** `main`
+- **Actions:** Publishes to npm automatically
+- **Note:** Test jobs are currently commented out for initial testing. Uncomment them to run tests before publishing.
 
 ### On Pull Request
-- **Branches:** `main`
-- **Actions:** Runs unit tests and integration tests
+- **Branch:** `main`
+- **Actions:** Currently disabled (test jobs commented out)
 
-### On Release
-- **Event:** Release created
-- **Actions:** Runs all tests, then publishes to npm
+**Note:** The workflow automatically publishes to npm on every push to the main branch. No manual release creation needed.
 
 ## Workflow Jobs
 
