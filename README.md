@@ -416,6 +416,14 @@ npm run lint:fix
 npm run format
 ```
 
+### CI/CD
+
+This project uses GitHub Actions for CI/CD. The pipeline automatically:
+- Runs tests on every push and pull request
+- Publishes to npm when a new release is created
+
+For detailed setup instructions, see [docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md).
+
 ### Test
 
 ```bash
