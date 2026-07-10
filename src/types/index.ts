@@ -51,7 +51,7 @@ export interface InitializePaymentResponse {
 }
 
 /**
- * Checkout response (from checkout endpoint)
+ * Checkout response
  */
 export interface CheckoutResponse {
   id: string;
@@ -99,8 +99,6 @@ export interface QRPaymentResponse {
 
 /**
  * OTP send response
- * Note: The API returns type: "ussd" for YaYa Wallet payments even when using OTP validation
- * This indicates the underlying payment method type (USSD-based) rather than the validation method
  */
 export interface OTPSendResponse {
   type: string;
@@ -111,8 +109,6 @@ export interface OTPSendResponse {
 
 /**
  * OTP validation response
- * Note: After successful OTP validation, the payment status becomes "completed"
- * and you should call getCheckout() to get the full payment details
  */
 export interface OTPValidateResponse {
   status: string;
