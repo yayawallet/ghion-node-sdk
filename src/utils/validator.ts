@@ -85,6 +85,24 @@ export function validatePaymentId(paymentId: string): void {
 }
 
 /**
+ * Validate phone number for OTP
+ */
+export function validatePhoneNumber(phoneNumber: string): void {
+  if (!phoneNumber || typeof phoneNumber !== 'string' || phoneNumber.trim().length === 0) {
+    throw new ValidationError('Phone number is required and must be a non-empty string', 'phoneNumber');
+  }
+}
+
+/**
+ * Validate OTP code
+ */
+export function validateOTPCode(otpCode: string | number): void {
+  if (!otpCode || otpCode.toString().trim().length === 0) {
+    throw new ValidationError('OTP code is required and must be a non-empty string or number', 'otpCode');
+  }
+}
+
+/**
  * Check if string is a valid URL
  */
 function isValidUrl(url: string): boolean {

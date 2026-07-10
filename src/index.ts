@@ -30,6 +30,13 @@ export type {
   WebhookEvent,
   ApiError as ApiErrorResponse,
   HttpMethod,
+  CheckoutResponse,
+  QRPaymentResponse,
+  OTPSendResponse,
+  OTPValidateResponse,
+  Provider,
+  QRInfo,
+  Merchant,
 } from './types';
 
 // Enums

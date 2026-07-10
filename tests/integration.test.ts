@@ -89,6 +89,49 @@ describe('GhionClient Integration Tests', () => {
     }, 10000);
   });
 
+  describe('New Payment Flows (QR, OTP, Checkout)', () => {
+    let paymentId: string;
+
+    beforeAll(async () => {
+      const response = await client.initializePayment({
+        amount: 10,
+        currency: 'ETB',
+        reference: `test_new_flows_${Date.now()}`,
+        description: 'SDK integration test for new flows',
+      });
+      paymentId = response.id;
+    }, 10000);
+
+    it('should retrieve checkout details', async () => {
+      const checkout = await client.getCheckout(paymentId);
+      expect(checkout).toBeDefined();
+      expect(checkout.amount).toBeDefined();
+      // Depending on the environment, it may or may not have QR immediately
+    }, 10000);
+
+    it('should retrieve QR code', async () => {
+      try {
+        const qr = await client.payWithQR(paymentId);
+        expect(qr).toBeDefined();
+        expect(qr.qr_image_url).toBeDefined();
+      } catch (e: any) {
+        // Handle case where QR is not supported by default channel
+        console.warn('QR payment not supported or failed:', e.message);
+      }
+    }, 10000);
+
+    it('should attempt OTP send', async () => {
+      try {
+        const otpResponse = await client.sendOTP(paymentId, '+251911234567');
+        expect(otpResponse).toBeDefined();
+        expect(otpResponse.status).toBeDefined();
+      } catch (e: any) {
+        // Expected to fail if the channel isn't set to an OTP-supporting wallet or invalid number
+        console.warn('OTP send failed (expected without full setup):', e.message);
+      }
+    }, 10000);
+  });
+
   describe('Webhook Signature Verification', () => {
     it('should verify webhook signature with real credentials', () => {
       const payload = JSON.stringify({

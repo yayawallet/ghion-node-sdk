@@ -45,21 +45,35 @@ async function basicPaymentFlow() {
     });
     console.log('');
 
-    // Step 2: Submit payment with a chosen channel
-    console.log('Step 2: Submitting payment...');
+    // Step 2: Choose a flow based on the channel
     const channels = initResponse.available_channels || initResponse.channels;
     const channelId = channels[0].code || channels[0].id || channels[0].name;
-    const submitResponse = await client.submitPayment(initResponse.id, {
-      channel: channelId,
-      phoneNumber: '+251911234567',
-    });
+    
+    // Check if it supports QR or OTP
+    if (initResponse.other_enabled || initResponse.qr) {
+       console.log('Step 2: Getting QR checkout details...');
+       const checkoutInfo = await client.getCheckout(initResponse.id);
+       console.log('Checkout Info received with QR:', checkoutInfo.qr ? 'Yes' : 'No');
+       
+       if (!checkoutInfo.qr) {
+         console.log('Requesting QR code explicitly...');
+         const qrResponse = await client.payWithQR(initResponse.id);
+         console.log('QR Image URL:', qrResponse.qr_image_url);
+       }
+    } else {
+       console.log('Step 2: Submitting standard payment...');
+       const submitResponse = await client.submitPayment(initResponse.id, {
+         channel: channelId,
+         phoneNumber: '+251911234567',
+       });
 
-    console.log('Payment submitted:', {
-      id: submitResponse.id,
-      status: submitResponse.status,
-      transactionId: submitResponse.transaction_id,
-      message: submitResponse.message,
-    });
+       console.log('Payment submitted:', {
+         id: submitResponse.id,
+         status: submitResponse.status,
+         transactionId: submitResponse.transaction_id,
+         message: submitResponse.message,
+       });
+    }
     console.log('');
 
     // Step 3: Check payment status

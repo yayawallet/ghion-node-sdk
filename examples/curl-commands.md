@@ -79,7 +79,89 @@ Replace `{PAYMENT_ID}` with the ID from step 1.
 
 ---
 
-## 3. Get Payment Status
+## 3. Get Checkout Info
+
+Retrieve checkout details, which may include QR codes.
+
+```bash
+curl http://localhost:3000/api/payments/{PAYMENT_ID}/checkout
+```
+
+---
+
+## 4. Get QR Code Directly
+
+Generate and retrieve a QR code for payment.
+
+```bash
+curl -X POST http://localhost:3000/api/payments/{PAYMENT_ID}/qr
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "qr_image_url": "https://...",
+    "transaction_id": "txn_1234567890"
+  }
+}
+```
+
+---
+
+## 5. Send OTP
+
+Send an OTP for wallet validation.
+
+```bash
+curl -X POST http://localhost:3000/api/payments/{PAYMENT_ID}/otp/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phoneNumber": "+251911234567"
+  }'
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "otp_sent",
+    "message": "OTP sent successfully"
+  }
+}
+```
+
+---
+
+## 6. Validate OTP
+
+Validate the OTP to complete the payment.
+
+```bash
+curl -X POST http://localhost:3000/api/payments/{PAYMENT_ID}/otp/validate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "otpCode": "123456"
+  }'
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "completed",
+    "transaction_id": "txn_1234567890",
+    "message": "Payment completed successfully"
+  }
+}
+```
+
+---
+
+## 7. Get Payment Status
 
 Check the status of a payment:
 
@@ -114,7 +196,7 @@ Replace `{PAYMENT_ID}` with the ID from step 1.
 
 ---
 
-## 4. Test Webhook
+## 8. Test Webhook
 
 Simulate a webhook event (for testing purposes):
 

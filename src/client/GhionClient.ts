@@ -17,6 +17,8 @@ import {
   validateInitializePaymentRequest,
   validateSubmitPaymentRequest,
   validatePaymentId,
+  validatePhoneNumber,
+  validateOTPCode,
 } from '../utils/validator';
 import {
   InitializePaymentRequest,
@@ -25,6 +27,10 @@ import {
   SubmitPaymentResponse,
   PaymentStatusResponse,
   WebhookEvent,
+  CheckoutResponse,
+  QRPaymentResponse,
+  OTPSendResponse,
+  OTPValidateResponse,
 } from '../types';
 
 /**
@@ -35,6 +41,7 @@ export class GhionClient {
   private readonly apiSecret: string;
   private readonly passphrase: string;
   private readonly baseUrl: string;
+  private readonly checkoutBaseUrl: string;
   private readonly timeout: number;
 
   constructor(config: GhionConfig) {
@@ -47,6 +54,7 @@ export class GhionClient {
     this.apiSecret = config.apiSecret;
     this.passphrase = config.passphrase;
     this.baseUrl = config.baseUrl || 'https://ghion.financial/api/v1';
+    this.checkoutBaseUrl = config.checkoutBaseUrl || 'https://app.ghion.financial/api/v1';
     this.timeout = config.timeout || 30000;
   }
 
@@ -90,8 +98,6 @@ export class GhionClient {
     const body: any = {};
     if (request.phoneNumber) body.phone_number = request.phoneNumber;
     if (request.accountNumber) body.account_number = request.accountNumber;
-    if (request.customerName) body.customer_name = request.customerName;
-    if (request.customerEmail) body.customer_email = request.customerEmail;
 
     return this.apiRequest<SubmitPaymentResponse>(
       'POST',
@@ -108,6 +114,59 @@ export class GhionClient {
   async getPaymentStatus(paymentId: string): Promise<PaymentStatusResponse> {
     validatePaymentId(paymentId);
     return this.apiRequest<PaymentStatusResponse>('GET', `/checkout/${paymentId}`);
+  }
+
+  /**
+   * Get checkout information
+   * @param paymentId - Payment session ID
+   * @returns Checkout response with QR, merchant, and provider info
+   */
+  async getCheckout(paymentId: string): Promise<CheckoutResponse> {
+    validatePaymentId(paymentId);
+    // Checkout endpoint with verify=1 is publicly accessible
+    return this.apiRequest<CheckoutResponse>('GET', `/checkout/${paymentId}?verify=1`, undefined, this.checkoutBaseUrl, true);
+  }
+
+  /**
+   * Pay with QR code
+   * @param paymentId - Payment session ID
+   * @returns QR payment response with QR image and payload
+   */
+  async payWithQR(paymentId: string): Promise<QRPaymentResponse> {
+    validatePaymentId(paymentId);
+    return this.apiRequest<QRPaymentResponse>('POST', `/checkout/${paymentId}/pay/other`, undefined, this.checkoutBaseUrl);
+  }
+
+  /**
+   * Send OTP to user's phone for YaYa Wallet payment
+   * @param paymentId - Payment session ID
+   * @param phoneNumber - User's phone number
+   * @returns OTP send response
+   */
+  async sendOTP(paymentId: string, phoneNumber: string): Promise<OTPSendResponse> {
+    validatePaymentId(paymentId);
+    validatePhoneNumber(phoneNumber);
+    return this.apiRequest<OTPSendResponse>('POST', `/checkout/${paymentId}/pay/yayawallet`, {
+      phone_number: phoneNumber,
+      payment_method: 'otp'
+    }, this.checkoutBaseUrl);
+  }
+
+  /**
+   * Validate OTP code for payment completion
+   * @param paymentId - Payment session ID
+   * @param otpCode - OTP code received by user
+   * @param phoneNumber - Phone number used to send OTP
+   * @returns OTP validation response
+   */
+  async validateOTP(paymentId: string, otpCode: string | number, phoneNumber: string): Promise<OTPValidateResponse> {
+    validatePaymentId(paymentId);
+    validateOTPCode(otpCode);
+    validatePhoneNumber(phoneNumber);
+    return this.apiRequest<OTPValidateResponse>('POST', `/checkout/${paymentId}/otp-validate`, {
+      otp_code: otpCode.toString(),
+      phone_number: phoneNumber,
+    }, this.checkoutBaseUrl);
   }
 
   /**
@@ -142,26 +201,40 @@ export class GhionClient {
   private async apiRequest<T>(
     method: HttpMethod,
     path: string,
-    data?: any
+    data?: any,
+    customBaseUrl?: string,
+    skipAuth: boolean = false
   ): Promise<T> {
     const body = data ? JSON.stringify(data) : '';
-    const fullPath = `/api/v1${path}`;
-    const timestamp = getCurrentTimestamp();
-    const signature = generateSignature(timestamp, method, fullPath, body, this.apiSecret);
-
+    const baseUrl = customBaseUrl || this.baseUrl;
+    const url = `${baseUrl}${path}`;
+    const parsedUrl = new URL(url);
+    const fullPath = parsedUrl.pathname + parsedUrl.search;
+    
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'X-Ghion-Key': this.apiKey,
-      'X-Ghion-Timestamp': String(timestamp),
-      'X-Ghion-Signature': signature,
-      'X-Ghion-Passphrase': this.passphrase,
     };
+
+    if (!skipAuth) {
+      const timestamp = getCurrentTimestamp();
+      const signature = generateSignature(timestamp, method, fullPath, body, this.apiSecret);
+      
+      headers['X-Ghion-Key'] = this.apiKey;
+      headers['X-Ghion-Timestamp'] = String(timestamp);
+      headers['X-Ghion-Signature'] = signature;
+      headers['X-Ghion-Passphrase'] = this.passphrase;
+    }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     try {
-      const response = await fetch(`${this.baseUrl}${path}`, {
+      const url = `${baseUrl}${path}`;
+      console.log(`API Request: ${method} ${url}`);
+      console.log(`Request body: ${body}`);
+      console.log(`Full path for signature: ${fullPath}`);
+      
+      const response = await fetch(url, {
         method,
         headers,
         body: body || undefined,

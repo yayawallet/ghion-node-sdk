@@ -51,9 +51,52 @@ npx ts-node examples/express-server.ts
 **Available endpoints:**
 - `POST /api/payments/initialize` - Initialize payment
 - `POST /api/payments/:paymentId/submit` - Submit payment
+- `POST /api/payments/:paymentId/qr` - Pay with QR code
+- `GET /api/payments/:paymentId/checkout` - Get checkout info
+- `POST /api/payments/:paymentId/otp/send` - Send OTP
+- `POST /api/payments/:paymentId/otp/validate` - Validate OTP
 - `GET /api/payments/:paymentId/status` - Get payment status
 - `POST /webhook` - Webhook handler
 - `GET /test/webhook-signature` - Generates test webhook signature
+
+---
+
+### 3. Checkout and QR Payment (`checkout-qr-example.ts`)
+**Purpose:** Checkout page integration and QR code payments
+
+**What it demonstrates:**
+- Payment initialization with checkout URLs
+- Getting checkout information with QR, merchant, and provider details
+- Paying using QR code
+- Handling different payment methods (USSD, OTP, QR)
+
+**How to run:**
+```bash
+npx ts-node examples/checkout-qr-example.ts
+```
+
+**Best for:** Implementing checkout page flows and QR-based payments
+
+---
+
+### 4. Test All Flows (`test-all-flows.ts`)
+**Purpose:** Comprehensive SDK testing across all methods
+
+**What it demonstrates:**
+- Testing all SDK methods sequentially
+- Payment initialization
+- Checkout details retrieval
+- Payment status checking
+- QR code generation
+- OTP send and validation
+- Error handling for unsupported methods
+
+**How to run:**
+```bash
+npx ts-node examples/test-all-flows.ts
+```
+
+**Best for:** Verifying SDK functionality and API connectivity across all endpoints
 
 ---
 
