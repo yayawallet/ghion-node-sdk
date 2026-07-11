@@ -92,6 +92,86 @@ app.post('/api/payments/:paymentId/submit', async (req: Request, res: Response) 
   }
 });
 
+// Pay with QR
+app.post('/api/payments/:paymentId/qr', async (req: Request, res: Response) => {
+  try {
+    const { paymentId } = req.params;
+    const qrData = await client.payWithQR(Array.isArray(paymentId) ? paymentId[0] : paymentId);
+
+    res.json({
+      success: true,
+      data: qrData,
+    });
+  } catch (error: any) {
+    console.error('QR payment error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to generate QR',
+    });
+  }
+});
+
+// Get Checkout info (includes QR)
+app.get('/api/payments/:paymentId/checkout', async (req: Request, res: Response) => {
+  try {
+    const { paymentId } = req.params;
+    const checkoutInfo = await client.getCheckout(Array.isArray(paymentId) ? paymentId[0] : paymentId);
+
+    res.json({
+      success: true,
+      data: checkoutInfo,
+    });
+  } catch (error: any) {
+    console.error('Get checkout info error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get checkout info',
+    });
+  }
+});
+
+// Send OTP
+app.post('/api/payments/:paymentId/otp/send', async (req: Request, res: Response) => {
+  try {
+    const { paymentId } = req.params;
+    const { phoneNumber } = req.body;
+
+    const otpResponse = await client.sendOTP(Array.isArray(paymentId) ? paymentId[0] : paymentId, phoneNumber);
+
+    res.json({
+      success: true,
+      data: otpResponse,
+    });
+  } catch (error: any) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to send OTP',
+    });
+  }
+});
+
+// Validate OTP
+app.post('/api/payments/:paymentId/otp/validate', async (req: Request, res: Response) => {
+  try {
+    const { paymentId } = req.params;
+    const { otpCode } = req.body;
+
+    const validateResponse = await client.validateOTP(Array.isArray(paymentId) ? paymentId[0] : paymentId, otpCode);
+
+    res.json({
+      success: true,
+      data: validateResponse,
+    });
+  } catch (error: any) {
+    console.error('Validate OTP error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to validate OTP',
+    });
+  }
+});
+
 // Get payment status
 app.get('/api/payments/:paymentId/status', async (req: Request, res: Response) => {
   try {
@@ -176,6 +256,10 @@ app.listen(PORT, () => {
   console.log(`  GET  /test/webhook-signature (generates test webhook signature)`);
   console.log(`  POST /api/payments/initialize`);
   console.log(`  POST /api/payments/:paymentId/submit`);
+  console.log(`  POST /api/payments/:paymentId/qr`);
+  console.log(`  GET  /api/payments/:paymentId/checkout`);
+  console.log(`  POST /api/payments/:paymentId/otp/send`);
+  console.log(`  POST /api/payments/:paymentId/otp/validate`);
   console.log(`  GET  /api/payments/:paymentId/status`);
   console.log(`  POST /webhook`);
 });

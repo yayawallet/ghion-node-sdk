@@ -11,6 +11,8 @@ A type-safe Node.js SDK for Ghion Finances payment gateway. Built with TypeScrip
 - **Express-Ready**: Seamless integration with Express.js middleware
 - **Webhook Support**: Secure webhook signature verification and parsing
 - **Modern**: Built with modern Node.js (18+) and TypeScript best practices
+- **Multi-Channel**: Support for USSD, QR, OTP, and card payment methods
+- **Real-time**: Built-in support for real-time payment status monitoring
 
 ## Installation
 
@@ -61,6 +63,7 @@ const client = new GhionClient({
   apiSecret: 'your-api-secret',
   passphrase: 'your-passphrase',
   baseUrl: 'https://ghion.financial/api/v1', // Optional, defaults to production
+  checkoutBaseUrl: 'https://app.ghion.financial/api/v1', // Optional, for checkout endpoints
   timeout: 30000, // Optional, request timeout in ms
 });
 ```
@@ -104,15 +107,13 @@ const payment = await client.initializePayment({
 
 ### Submit Payment
 
-Submit a payment with the chosen channel and customer details.
+Submit a payment with the chosen channel and customer details (e.g., USSD push).
 
 ```typescript
 const result = await client.submitPayment(paymentId, {
   channel: 'telebirr', // Required: Channel ID from initialize response
   phoneNumber: '+251911234567', // Optional: Customer phone number
   accountNumber: '1234567890', // Optional: Customer account number
-  customerName: 'John Doe', // Optional: Customer name
-  customerEmail: 'john@example.com', // Optional: Customer email
 });
 ```
 
@@ -126,6 +127,47 @@ const result = await client.submitPayment(paymentId, {
   redirect_url?: string;
 }
 ```
+
+### QR & Other Payment Methods
+
+For QR-based or "Other" payment methods, you can retrieve the QR code or checkout URL.
+
+```typescript
+// Pay using QR code directly
+const qrResult = await client.payWithQR(paymentId);
+console.log('QR Image URL:', qrResult.qr_image_url);
+
+// Or get full checkout details (including QR)
+const checkoutDetails = await client.getCheckout(paymentId);
+console.log('Checkout QR:', checkoutDetails.qr);
+```
+
+### OTP Payment Flow
+
+For wallet providers that require OTP validation (e.g., YaYa Wallet).
+
+**Important:** The OTP flow requires the payment to be in the correct state before validation. You must first send OTP to prepare the payment, then validate the OTP to complete it.
+
+```typescript
+// 1. Send OTP to customer's phone
+// This prepares the payment for OTP validation
+const otpSent = await client.sendOTP(paymentId, '+251911234567');
+console.log('OTP sent:', otpSent.status);
+
+// 2. Validate OTP to complete payment
+// Only call this after OTP has been sent successfully
+const otpValidated = await client.validateOTP(paymentId, '123456');
+console.log('Payment status:', otpValidated.status);
+
+// 3. Get full payment details after successful validation
+const checkoutDetails = await client.getCheckout(paymentId);
+console.log('Full payment details:', checkoutDetails);
+```
+
+**Note:** If you receive an error "Transaction is not in a state awaiting OTP validation", ensure that:
+1. You have called `sendOTP` before `validateOTP`
+2. The payment is still in a valid state (not expired or completed)
+3. The phone number used in `sendOTP` is valid and registered with the wallet provider
 
 ### Get Payment Status
 
@@ -291,7 +333,27 @@ app.listen(3000);
 
 ## Error Handling
 
-The SDK provides custom error classes for different error scenarios:
+The SDK provides comprehensive input validation and custom error classes for different error scenarios:
+
+### Input Validation
+
+The SDK automatically validates all inputs before making API requests:
+
+```typescript
+// Payment ID validation (required for most methods)
+await client.getPaymentStatus(''); // Throws ValidationError: "Payment ID is required"
+
+// Phone number validation (for OTP and USSD)
+await client.sendOTP('payment123', ''); // Throws ValidationError: "Phone number is required"
+
+// OTP code validation
+await client.validateOTP('payment123', ''); // Throws ValidationError: "OTP code is required"
+
+// Amount validation
+await client.initializePayment({ amount: -100, reference: 'test' }); // Throws ValidationError: "Amount must be positive"
+```
+
+### Error Classes
 
 ```typescript
 import {
@@ -480,6 +542,27 @@ Contributions are welcome! Please ensure:
 4. Documentation is updated
 
 ## Changelog
+
+### 1.1.0 (2026-07-10)
+
+**New Features:**
+- Added `payWithQR` method to directly generate QR codes for "Other" channels
+- Added `getCheckout` method to retrieve full checkout information, including merchant details and QR
+- Added `sendOTP` and `validateOTP` methods for seamless wallet integrations (e.g., YaYa Wallet)
+- Added `checkoutBaseUrl` configuration option for checkout-specific endpoints
+- Added comprehensive input validation for all API methods
+- Added phone number and OTP code validation
+
+**Improvements:**
+- Enhanced error handling with detailed validation messages
+- Updated documentation and examples to cover QR and OTP flows
+- Added test-all-flows example for comprehensive SDK testing
+- Improved webhook signature verification documentation
+
+**Bug Fixes:**
+- Fixed signature generation for checkout endpoints
+- Removed unnecessary fields from submitPayment request
+- Fixed OTP payload field names for API compatibility
 
 ### 1.0.0 (2026-07-07)
 

@@ -105,5 +105,47 @@ describe('GhionClient', () => {
         client.initializePayment({ amount: 100, reference: '' })
       ).rejects.toThrow(ValidationError);
     });
+
+    it('should throw ValidationError for empty paymentId in submitPayment', async () => {
+      await expect(
+        client.submitPayment('', { channel: 'telebirr' })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty paymentId in getPaymentStatus', async () => {
+      await expect(
+        client.getPaymentStatus('')
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty paymentId in getCheckout', async () => {
+      await expect(
+        client.getCheckout('')
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty paymentId in payWithQR', async () => {
+      await expect(
+        client.payWithQR('')
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty phone in sendOTP', async () => {
+      await expect(
+        client.sendOTP('p1', '')
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty otp in validateOTP', async () => {
+      await expect(
+        client.validateOTP('p1', '', '0924357096')
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty phone in validateOTP', async () => {
+      await expect(
+        client.validateOTP('p1', '123456', '')
+      ).rejects.toThrow(ValidationError);
+    });
   });
 });

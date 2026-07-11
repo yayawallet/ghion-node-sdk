@@ -6,6 +6,7 @@ export interface GhionConfig {
   apiSecret: string;
   passphrase: string;
   baseUrl?: string;
+  checkoutBaseUrl?: string;
   timeout?: number;
 }
 
@@ -40,12 +41,106 @@ export interface InitializePaymentResponse {
   providers?: any[];
   card_enabled?: boolean;
   other_enabled?: boolean;
+  qr?: QRInfo;
   yaya_unique_reference?: string;
   checkout_url?: string;
   allow_amount_edit?: boolean;
   callback_url?: string;
   return_url?: string;
   cancel_url?: string;
+}
+
+/**
+ * Checkout response
+ */
+export interface CheckoutResponse {
+  id: string;
+  reference: string;
+  amount: number;
+  currency: string;
+  status: string;
+  mode?: string;
+  description: string;
+  channel?: string;
+  is_expired: boolean;
+  expires_at: string;
+  providers?: Provider[];
+  card_enabled?: boolean;
+  other_enabled?: boolean;
+  available_channels?: PaymentChannel[];
+  created_at: string;
+  callback_url?: string;
+  return_url?: string;
+  cancel_url?: string;
+  yaya_unique_reference?: string;
+  qr?: QRInfo;
+  merchant?: Merchant;
+  collect_phone?: boolean;
+  collect_email?: boolean;
+  allow_amount_edit?: boolean;
+  payer_phone?: string;
+  fee_on_merchant?: boolean;
+  gateway_fee?: number;
+  total_amount?: number;
+  stripe_publishable_key?: string;
+  checkout_url?: string;
+}
+
+/**
+ * QR payment response
+ */
+export interface QRPaymentResponse {
+  type: string;
+  transaction_id: string;
+  status: string;
+  qr_image_url: string;
+  qr_payload: string;
+}
+
+/**
+ * OTP send response
+ */
+export interface OTPSendResponse {
+  type: string;
+  transaction_id: string;
+  status: string;
+  message: string;
+}
+
+/**
+ * OTP validation response
+ */
+export interface OTPValidateResponse {
+  status: string;
+  transaction_id: string;
+}
+
+/**
+ * Provider information
+ */
+export interface Provider {
+  code: string;
+  name: string;
+  logo?: string;
+  methods: string[];
+}
+
+/**
+ * QR information
+ */
+export interface QRInfo {
+  qr_image_url: string;
+  qr_payload: string;
+}
+
+/**
+ * Merchant information
+ */
+export interface Merchant {
+  name: string;
+  slug: string;
+  business_name: string;
+  logo_url?: string;
 }
 
 /**
@@ -70,8 +165,7 @@ export interface SubmitPaymentRequest {
   channel: string;
   phoneNumber?: string;
   accountNumber?: string;
-  customerName?: string;
-  customerEmail?: string;
+  paymentMethod?: string; // 'ussd', 'otp', or 'qr'
 }
 
 /**
