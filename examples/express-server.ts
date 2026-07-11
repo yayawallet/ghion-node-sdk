@@ -152,20 +152,27 @@ app.post('/api/payments/:paymentId/otp/send', async (req: Request, res: Response
 });
 
 // Validate OTP
-app.post('/api/payments/:paymentId/otp/validate', async (req: Request, res: Response) => {
+app.post('/api/payments/:paymentId/otp/validate', async (req: Request, res: Response): Promise<Response> => {
   try {
     const { paymentId } = req.params;
-    const { otpCode } = req.body;
+    const { otpCode, phoneNumber } = req.body;
 
-    const validateResponse = await client.validateOTP(Array.isArray(paymentId) ? paymentId[0] : paymentId, otpCode);
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number is required'
+      });
+    }
 
-    res.json({
+    const validateResponse = await client.validateOTP(Array.isArray(paymentId) ? paymentId[0] : paymentId, otpCode, phoneNumber);
+
+    return res.json({
       success: true,
       data: validateResponse,
     });
   } catch (error: any) {
     console.error('Validate OTP error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Failed to validate OTP',
     });
