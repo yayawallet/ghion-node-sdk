@@ -256,10 +256,10 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
     
     // Handle different event types
     switch (event.event) {
-      case WebhookEventType.PAYMENT_COMPLETED:
+      case WebhookEventType.TRANSACTION_COMPLETED:
         // Payment completed successfully
         break;
-      case WebhookEventType.PAYMENT_FAILED:
+      case WebhookEventType.TRANSACTION_FAILED:
         // Payment failed
         break;
       // ... handle other events
@@ -276,10 +276,13 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
 
 ```typescript
 enum WebhookEventType {
-  PAYMENT_COMPLETED = 'payment.completed',
-  PAYMENT_FAILED = 'payment.failed',
-  PAYMENT_CANCELLED = 'payment.cancelled',
-  PAYMENT_EXPIRED = 'payment.expired',
+  TRANSACTION_COMPLETED = 'transaction.completed',
+  TRANSACTION_FAILED = 'transaction.failed',
+  TRANSACTION_REFUNDED = 'transaction.refunded',
+  TRANSACTION_PARTIALLY_REFUNDED = 'transaction.partially_refunded',
+  TRANSACTION_EXPIRED = 'transaction.expired',
+  TRANSACTION_DISPUTED = 'transaction.disputed',
+  TRANSACTION_UPDATED = 'transaction.updated',
 }
 ```
 
@@ -526,7 +529,7 @@ Headers sent with every API request:
 
 ## License
 
-MIT License - see LICENSE file for details
+- See [MIT License ](./LICENSE) file for details
 
 ## Support
 
@@ -540,36 +543,3 @@ Contributions are welcome! Please ensure:
 2. All tests pass
 3. TypeScript types are properly defined
 4. Documentation is updated
-
-## Changelog
-
-### 1.1.0 (2026-07-10)
-
-**New Features:**
-- Added `payWithQR` method to directly generate QR codes for "Other" channels
-- Added `getCheckout` method to retrieve full checkout information, including merchant details and QR
-- Added `sendOTP` and `validateOTP` methods for seamless wallet integrations (e.g., YaYa Wallet)
-- Added `checkoutBaseUrl` configuration option for checkout-specific endpoints
-- Added comprehensive input validation for all API methods
-- Added phone number and OTP code validation
-
-**Improvements:**
-- Enhanced error handling with detailed validation messages
-- Updated documentation and examples to cover QR and OTP flows
-- Added test-all-flows example for comprehensive SDK testing
-- Improved webhook signature verification documentation
-
-**Bug Fixes:**
-- Fixed signature generation for checkout endpoints
-- Removed unnecessary fields from submitPayment request
-- Fixed OTP payload field names for API compatibility
-
-### 1.0.0 (2026-07-07)
-
-- Initial release
-- Full TypeScript support
-- HMAC-SHA256 authentication
-- Webhook signature verification
-- Comprehensive error handling
-- Input validation
-- Express.js integration examples

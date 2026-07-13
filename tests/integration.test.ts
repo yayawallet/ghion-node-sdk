@@ -135,7 +135,7 @@ describe('GhionClient Integration Tests', () => {
   describe('Webhook Signature Verification', () => {
     it('should verify webhook signature with real credentials', () => {
       const payload = JSON.stringify({
-        event: 'payment.completed',
+        event: 'transaction.completed',
         data: { payment_id: 'test-id', amount: 100, currency: 'ETB' },
       });
 
@@ -148,7 +148,7 @@ describe('GhionClient Integration Tests', () => {
 
     it('should reject invalid webhook signature', () => {
       const payload = JSON.stringify({
-        event: 'payment.completed',
+        event: 'transaction.completed',
         data: { payment_id: 'test-id', amount: 100, currency: 'ETB' },
       });
 
@@ -158,7 +158,7 @@ describe('GhionClient Integration Tests', () => {
 
     it('should parse webhook with valid signature', () => {
       const payload = JSON.stringify({
-        event: 'payment.completed',
+        event: 'transaction.completed',
         data: { payment_id: 'test-id', amount: 100, currency: 'ETB' },
       });
 
@@ -166,7 +166,7 @@ describe('GhionClient Integration Tests', () => {
       const signature = crypto.createHmac('sha256', apiSecret).update(payload).digest('base64');
 
       const event = client.parseWebhook(payload, signature);
-      expect(event.event).toBe('payment.completed');
+      expect(event.event).toBe('transaction.completed');
       expect(event.data.payment_id).toBe('test-id');
     });
   });

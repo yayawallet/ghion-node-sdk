@@ -37,7 +37,7 @@ export function verifyWebhookSignature(
   // Use timing-safe comparison to prevent timing attacks
   try {
     return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
-  } catch (error) {
+  } catch {
     return false;
   }
 }

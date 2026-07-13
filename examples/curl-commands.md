@@ -205,7 +205,7 @@ curl -X POST http://localhost:3000/webhook \
   -H "Content-Type: application/json" \
   -H "X-Ghion-Signature: {SIGNATURE}" \
   -d '{
-    "event": "payment.completed",
+    "event": "transaction.completed",
     "data": {
       "payment_id": "019f3c14-8798-7e95-be0d-46e58b8fc4b7",
       "transaction_id": "txn_1234567890",
@@ -288,7 +288,7 @@ curl http://localhost:3000/api/payments/invalid-id/status
 ```bash
 curl -X POST http://localhost:3000/webhook \
   -H "Content-Type: application/json" \
-  -d '{"event": "payment.completed", "data": {}}'
+  -d '{"event": "transaction.completed", "data": {}}'
 ```
 
 **Expected Response:** 400 error with "Missing signature" message

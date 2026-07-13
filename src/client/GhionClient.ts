@@ -95,7 +95,7 @@ export class GhionClient {
     validatePaymentId(paymentId);
     validateSubmitPaymentRequest(request);
 
-    const body: any = {};
+    const body: Record<string, unknown> = {};
     if (request.phoneNumber) body.phone_number = request.phoneNumber;
     if (request.accountNumber) body.account_number = request.accountNumber;
 
@@ -201,9 +201,10 @@ export class GhionClient {
   private async apiRequest<T>(
     method: HttpMethod,
     path: string,
-    data?: any,
+    data?: Record<string, unknown>,
     customBaseUrl?: string,
-    skipAuth: boolean = false
+    skipAuth: boolean = false,
+    attempt: number = 1
   ): Promise<T> {
     const body = data ? JSON.stringify(data) : '';
     const baseUrl = customBaseUrl || this.baseUrl;
@@ -229,10 +230,10 @@ export class GhionClient {
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     try {
-      const url = `${baseUrl}${path}`;
-      console.log(`API Request: ${method} ${url}`);
-      console.log(`Request body: ${body}`);
-      console.log(`Full path for signature: ${fullPath}`);
+      // const url = `${baseUrl}${path}`;
+      // console.log(`API Request: ${method} ${url}`);
+      // console.log(`Request body: ${body}`);
+      // console.log(`Full path for signature: ${fullPath}`);
       
       const response = await fetch(url, {
         method,
@@ -245,17 +246,32 @@ export class GhionClient {
 
       const text = await response.text();
 
-      // Handle rate limiting
+      // Handle rate limiting with automatic retry
       if (response.status === 429) {
         const retryAfter = response.headers.get('Retry-After');
+        const waitMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : 1000 * attempt;
+        
+        if (attempt < 3) {
+          await new Promise(resolve => setTimeout(resolve, waitMs));
+          return this.apiRequest<T>(method, path, data, customBaseUrl, skipAuth, attempt + 1);
+        }
+        
         throw new RateLimitError(
           'API rate limit exceeded',
           retryAfter ? parseInt(retryAfter, 10) : undefined
         );
       }
 
+      // Retry transient failures for safe GET methods
+      const isSafeGet = method === 'GET' && this.isSafeEndpoint(path);
+      if (isSafeGet && (response.status >= 500 || response.status === 0) && attempt < 3) {
+        const waitMs = 1000 * 2 ** (attempt - 1); // Exponential backoff: 1s, 2s, 4s
+        await new Promise(resolve => setTimeout(resolve, waitMs));
+        return this.apiRequest<T>(method, path, data, customBaseUrl, skipAuth, attempt + 1);
+      }
+
       // Try to parse as JSON
-      let json: any;
+      let json: Record<string, unknown>;
       try {
         json = JSON.parse(text);
       } catch {
@@ -271,13 +287,25 @@ export class GhionClient {
 
       // Handle API errors
       if (!response.ok) {
-        const errorMessage = json.error?.message || `API ${response.status}`;
-        throw new ApiError(errorMessage, response.status, json);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const errorMessage = (json as any).error?.message || `API ${response.status}`;
+        throw new ApiError(errorMessage, response.status, this.redactSensitiveData(json));
       }
 
       return json as T;
     } catch (error) {
       clearTimeout(timeoutId);
+
+      // Retry network errors for safe GET methods
+      const isSafeGet = method === 'GET' && this.isSafeEndpoint(path);
+      const isRetryableError = error instanceof Error &&
+        (error.name === 'AbortError' || error.message.includes('fetch failed') || 'cause' in error);
+      
+      if (isSafeGet && isRetryableError && attempt < 3) {
+        const waitMs = 1000 * 2 ** (attempt - 1); // Exponential backoff: 1s, 2s, 4s
+        await new Promise(resolve => setTimeout(resolve, waitMs));
+        return this.apiRequest<T>(method, path, data, customBaseUrl, skipAuth, attempt + 1);
+      }
 
       if (error instanceof ApiError || error instanceof RateLimitError) {
         throw error;
@@ -293,6 +321,46 @@ export class GhionClient {
 
       throw new NetworkError('Unknown network error occurred');
     }
+  }
+
+  /**
+   * Check if endpoint is safe for retry (idempotent GET operations)
+   * @private
+   */
+  private isSafeEndpoint(path: string): boolean {
+    return path.includes('/checkout/') && !path.includes('/pay/') && !path.includes('/otp-validate');
+  }
+
+  /**
+   * Redact sensitive data from error responses
+   * Performs deep redaction on nested objects and arrays with depth limit protection
+   * beyond the maximum depth (20), data is returned unredacted rather than dropped
+   * @private
+   */
+  private redactSensitiveData(data: unknown, depth: number = 0): Record<string, unknown> {
+    // Depth limit protection to prevent stack overflow on pathological inputs
+    if (depth > 20 || !data || typeof data !== 'object') return data as Record<string, unknown>;
+    
+    const sensitiveKeys = ['api_key', 'api_secret', 'passphrase', 'signature', 'password', 'otp_code', 'token', 'phone_number', 'account_number'];
+    
+    // Handle arrays recursively
+    if (Array.isArray(data)) {
+      return data.map(item => this.redactSensitiveData(item, depth + 1)) as unknown as Record<string, unknown>;
+    }
+    
+    // Handle objects recursively
+    const redacted: Record<string, unknown> = {};
+    for (const key of Object.keys(data as Record<string, unknown>)) {
+      if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk))) {
+        redacted[key] = '[REDACTED]';
+      } else if (typeof (data as Record<string, unknown>)[key] === 'object' && (data as Record<string, unknown>)[key] !== null) {
+        redacted[key] = this.redactSensitiveData((data as Record<string, unknown>)[key], depth + 1);
+      } else {
+        redacted[key] = (data as Record<string, unknown>)[key];
+      }
+    }
+    
+    return redacted;
   }
 
 }

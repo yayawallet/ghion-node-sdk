@@ -30,7 +30,7 @@ app.use('/api', express.json());
 
 // Test webhook signature generator (for testing purposes)
 app.get('/test/webhook-signature', (_req: Request, res: Response) => {
-  const testBody = '{"event":"payment.completed","data":{"payment_id":"019f3c14-8798-7e95-be0d-46e58b8fc4b7","transaction_id":"txn_1234567890","amount":100,"currency":"ETB","status":"completed"}}';
+  const testBody = '{"event":"transaction.completed","data":{"payment_id":"019f3c14-8798-7e95-be0d-46e58b8fc4b7","transaction_id":"txn_1234567890","amount":100,"currency":"ETB","status":"completed"}}';
   const secret = process.env.GHION_API_SECRET || 'your-api-secret';
   const signature = crypto.createHmac('sha256', secret).update(testBody).digest('base64');
   
@@ -223,22 +223,17 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (req: Request, r
 
     // Handle different webhook events
     switch (event.event) {
-      case WebhookEventType.PAYMENT_COMPLETED:
+      case WebhookEventType.TRANSACTION_COMPLETED:
         console.log('Payment completed!');
         // Update your database, send confirmation email, etc.
         break;
 
-      case WebhookEventType.PAYMENT_FAILED:
+      case WebhookEventType.TRANSACTION_FAILED:
         console.log('Payment failed');
         // Handle failed payment
         break;
 
-      case WebhookEventType.PAYMENT_CANCELLED:
-        console.log('Payment cancelled');
-        // Handle cancelled payment
-        break;
-
-      case WebhookEventType.PAYMENT_EXPIRED:
+      case WebhookEventType.TRANSACTION_EXPIRED:
         console.log('Payment expired');
         // Handle expired payment
         break;
