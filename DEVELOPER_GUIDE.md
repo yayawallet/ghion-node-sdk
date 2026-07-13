@@ -143,14 +143,14 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
     const event = client.parseWebhook(req.body, signature);
     
     switch (event.event) {
-      case WebhookEventType.PAYMENT_COMPLETED:
+      case WebhookEventType.TRANSACTION_COMPLETED:
         // Fulfill the order! (e.g., mark DB as paid, send email)
         console.log('Payment Success:', event.data.payment_id);
         break;
-      case WebhookEventType.PAYMENT_FAILED:
+      case WebhookEventType.TRANSACTION_FAILED:
         // Handle failure
         break;
-      // Handle PAYMENT_CANCELLED, PAYMENT_EXPIRED...
+      // Handle TRANSACTION_CANCELLED, TRANSACTION_EXPIRED...
     }
 
     res.status(200).send('OK');

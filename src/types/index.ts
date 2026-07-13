@@ -21,7 +21,7 @@ export interface InitializePaymentRequest {
   webhookUrl?: string;
   returnUrl?: string;
   cancelUrl?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -38,7 +38,7 @@ export interface InitializePaymentResponse {
   available_channels?: PaymentChannel[];
   expires_at: string;
   created_at: string;
-  providers?: any[];
+  providers?: Record<string, unknown>[];
   card_enabled?: boolean;
   other_enabled?: boolean;
   qr?: QRInfo;
@@ -220,10 +220,13 @@ export enum PaymentStatus {
  * Webhook event types
  */
 export enum WebhookEventType {
-  PAYMENT_COMPLETED = 'payment.completed',
-  PAYMENT_FAILED = 'payment.failed',
-  PAYMENT_CANCELLED = 'payment.cancelled',
-  PAYMENT_EXPIRED = 'payment.expired',
+  TRANSACTION_COMPLETED = 'transaction.completed',
+  TRANSACTION_FAILED = 'transaction.failed',
+  TRANSACTION_REFUNDED = 'transaction.refunded',
+  TRANSACTION_PARTIALLY_REFUNDED = 'transaction.partially_refunded',
+  TRANSACTION_EXPIRED = 'transaction.expired',
+  TRANSACTION_DISPUTED = 'transaction.disputed',
+  TRANSACTION_UPDATED = 'transaction.updated',
 }
 
 /**
@@ -250,7 +253,7 @@ export interface ApiError {
   error: {
     message: string;
     code?: string;
-    details?: any;
+    details?: Record<string, unknown>;
   };
 }
 

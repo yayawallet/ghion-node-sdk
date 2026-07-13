@@ -2,30 +2,42 @@ import { ValidationError } from '../errors';
 import { InitializePaymentRequest, SubmitPaymentRequest } from '../types';
 
 /**
+ * Helper function to validate non-empty strings
+ */
+function requireNonEmptyString(value: unknown, field: string): asserts value is string {
+  if (!value || typeof value !== 'string' || value.trim().length === 0) {
+    throw new ValidationError(`${field} is required and must be a non-empty string`, field, value);
+  }
+}
+
+/**
+ * Helper function to validate optional string fields
+ */
+function requireStringIfPresent(value: unknown, field: string): asserts value is string | undefined {
+  if (value !== undefined && value !== null && typeof value !== 'string') {
+    throw new ValidationError(`${field} must be a string if provided`, field, value);
+  }
+}
+
+/**
  * Validate API key format
  */
 export function validateApiKey(apiKey: string): void {
-  if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length === 0) {
-    throw new ValidationError('API key is required and must be a non-empty string', 'apiKey');
-  }
+  requireNonEmptyString(apiKey, 'API key');
 }
 
 /**
  * Validate API secret format
  */
 export function validateApiSecret(apiSecret: string): void {
-  if (!apiSecret || typeof apiSecret !== 'string' || apiSecret.trim().length === 0) {
-    throw new ValidationError('API secret is required and must be a non-empty string', 'apiSecret');
-  }
+  requireNonEmptyString(apiSecret, 'API secret');
 }
 
 /**
  * Validate passphrase format
  */
 export function validatePassphrase(passphrase: string): void {
-  if (!passphrase || typeof passphrase !== 'string' || passphrase.trim().length === 0) {
-    throw new ValidationError('Passphrase is required and must be a non-empty string', 'passphrase');
-  }
+  requireNonEmptyString(passphrase, 'Passphrase');
 }
 
 /**
@@ -36,13 +48,8 @@ export function validateInitializePaymentRequest(data: InitializePaymentRequest)
     throw new ValidationError('Amount must be a positive number', 'amount', data.amount);
   }
 
-  if (!data.reference || typeof data.reference !== 'string' || data.reference.trim().length === 0) {
-    throw new ValidationError('Reference is required and must be a non-empty string', 'reference', data.reference);
-  }
-
-  if (data.currency && typeof data.currency !== 'string') {
-    throw new ValidationError('Currency must be a string', 'currency', data.currency);
-  }
+  requireNonEmptyString(data.reference, 'Reference');
+  requireStringIfPresent(data.currency, 'Currency');
 
   if (data.webhookUrl && !isValidUrl(data.webhookUrl)) {
     throw new ValidationError('Webhook URL must be a valid URL', 'webhookUrl', data.webhookUrl);
@@ -61,36 +68,23 @@ export function validateInitializePaymentRequest(data: InitializePaymentRequest)
  * Validate payment submission request
  */
 export function validateSubmitPaymentRequest(data: SubmitPaymentRequest): void {
-  if (!data.channel || typeof data.channel !== 'string' || data.channel.trim().length === 0) {
-    throw new ValidationError('Channel is required and must be a non-empty string', 'channel', data.channel);
-  }
-
-  if (data.phoneNumber && typeof data.phoneNumber !== 'string') {
-    throw new ValidationError('Phone number must be a string', 'phoneNumber', data.phoneNumber);
-  }
-
-  if (data.accountNumber && typeof data.accountNumber !== 'string') {
-    throw new ValidationError('Account number must be a string', 'accountNumber', data.accountNumber);
-  }
-
+  requireNonEmptyString(data.channel, 'Channel');
+  requireStringIfPresent(data.phoneNumber, 'Phone number');
+  requireStringIfPresent(data.accountNumber, 'Account number');
 }
 
 /**
  * Validate payment ID
  */
 export function validatePaymentId(paymentId: string): void {
-  if (!paymentId || typeof paymentId !== 'string' || paymentId.trim().length === 0) {
-    throw new ValidationError('Payment ID is required and must be a non-empty string', 'paymentId');
-  }
+  requireNonEmptyString(paymentId, 'Payment ID');
 }
 
 /**
  * Validate phone number for OTP
  */
 export function validatePhoneNumber(phoneNumber: string): void {
-  if (!phoneNumber || typeof phoneNumber !== 'string' || phoneNumber.trim().length === 0) {
-    throw new ValidationError('Phone number is required and must be a non-empty string', 'phoneNumber');
-  }
+  requireNonEmptyString(phoneNumber, 'Phone number');
 }
 
 /**
@@ -98,7 +92,7 @@ export function validatePhoneNumber(phoneNumber: string): void {
  */
 export function validateOTPCode(otpCode: string | number): void {
   if (!otpCode || otpCode.toString().trim().length === 0) {
-    throw new ValidationError('OTP code is required and must be a non-empty string or number', 'otpCode');
+    throw new ValidationError('OTP code is required and must be a non-empty string or number', 'OTP code');
   }
 }
 
