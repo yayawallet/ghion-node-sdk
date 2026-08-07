@@ -1,5 +1,37 @@
 ## Changelog
 
+### 1.4.0 (2026-08-06)
+
+**New Features:**
+- Added complete Bill Payment API support for creating and managing bills
+- Added `createBill` method to create single bills with customer information, due dates, and penalty configurations
+- Added `createBulkBills` method to create multiple bills in a single request for batch billing cycles
+- Added `listBills` method to list bills with filters (status, search, cluster, bill_code, date range, pagination)
+- Added `getBillStatistics` method to retrieve aggregate counts and amounts for bills
+- Added `getBillDashboard` method to get detailed analytics including summary statistics, trends, and breakdowns by cluster/bill code
+- Added `getBillDetail` method to retrieve full bill details including penalty configuration, metadata, and payment history
+- Added `updateBill` method to update bill properties (partial update - only provided fields are updated)
+- Added `deleteBill` method to delete bills (only bills with no payments can be deleted)
+- Added `recordManualPayment` method to record manual payments (cash, bank transfer, etc.) for reconciliation purposes
+- Added `getBillPaymentLink` method to generate shareable payment links for bills
+- Added `getBillerSettings` method to retrieve biller configuration including biller_code, clusters, bill codes, and webhook settings
+- Added `updateBillerSettings` method to update biller configuration
+- Added `publicBillLookup` method for public bill lookup (no authentication) used by bank branches and mobile banking apps
+- Added `BillStatus` enum (pending, paid, forwarded, cancelled, expired, overdue)
+- Added `Penalty` interface for late payment penalty configuration
+- Added comprehensive bill payment types: CreateBillRequest, BillResponse, BulkCreateBillsRequest, BulkCreateBillsResponse, ListBillsRequest, ListBillsResponse, BillStatistics, BillDashboard, PaymentLinkResponse, PublicBillLookupRequest, PublicBillLookupResponse, BillerSettingsRequest, BillerSettingsResponse, UpdateBillRequest, DeleteBillResponse, RecordManualPaymentRequest, RecordManualPaymentResponse
+- Added validators for all bill payment requests with date format validation (Y-m-d), email validation, and penalty configuration validation
+- Added `reference` field to `SubmitPaymentRequest` as optional parameter for order ID validation
+
+**Improvements:**
+- Enhanced date validation with Y-m-d format support for bill payment dates
+- Added email validation for customer email fields
+- Added penalty configuration validation (type, fee, max_amount, recurring)
+- Updated `BillDashboard` response schema to include `summary` object with detailed statistics, `by_cluster`, `by_bill_code`, and `trend` arrays
+- Updated `PublicBillLookupResponse` to flat object structure with `payment_status` (uppercase), `client.uniqueName`/`client.name`, `amount_due`, and other fields
+- Added unit tests for all new bill payment methods including validation tests
+- Added integration tests for all new bill payment endpoints
+
 ### 1.3.0 (2026-07-13)
 
 **BREAKING CHANGES:**

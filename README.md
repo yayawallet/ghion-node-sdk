@@ -1,6 +1,6 @@
 # @ghion-finances/node-sdk
 
-A type-safe Node.js SDK for Ghion Finances payment gateway. Built with TypeScript for maximum reliability and developer experience.
+A type-safe Node.js SDK for the Ghion Finances payment gateway. Built with security, maintainability, and scalability in mind for developers maintaining or contributing to this repository.
 
 ## Features
 
@@ -9,442 +9,136 @@ A type-safe Node.js SDK for Ghion Finances payment gateway. Built with TypeScrip
 - **Robust**: Comprehensive error handling with custom error classes
 - **Validated**: Built-in input validation for all API requests
 - **Express-Ready**: Seamless integration with Express.js middleware
-- **Webhook Support**: Secure webhook signature verification and parsing
+- **Retry Logic**: Automatic retry for transient failures and rate limits
 - **Modern**: Built with modern Node.js (18+) and TypeScript best practices
 - **Multi-Channel**: Support for USSD, QR, OTP, and card payment methods
 - **Real-time**: Built-in support for real-time payment status monitoring
+- **Bill Payment**: Complete bill management API for creating, listing, and analyzing bills
 
-## Installation
+## Repository Structure
 
+```text
+express-sdk/
+├── src/
+│   ├── client/           # HTTP client and API methods
+│   ├── types/            # TypeScript type definitions
+│   ├── errors/           # Custom error classes
+│   ├── utils/            # Utility functions (crypto, validation)
+│   └── middleware/       # Express.js middleware for webhooks
+├── examples/             # Usage examples (Express server, quick start)
+├── tests/                # Test files (unit and integration)
+├── docs/                 # Additional documentation
+└── dist/                 # Compiled JavaScript output
+```
+
+## Setup for Development
+
+### 1. Prerequisites
+- Node.js >= 18.0.0
+- TypeScript >= 4.0.0
+- Git
+- npm or yarn
+
+### 2. Clone the Repository
 ```bash
-npm install @ghion-finances/node-sdk
+git clone https://github.com/yayawallet/ghion-node-sdk.git
+cd ghion-node-sdk
 ```
 
-## Quick Start
-
-```typescript
-import { GhionClient } from '@ghion-finances/node-sdk';
-
-const client = new GhionClient({
-  apiKey: process.env.GHION_API_KEY,
-  apiSecret: process.env.GHION_API_SECRET,
-  passphrase: process.env.GHION_API_PASSPHRASE,
-});
-
-// Initialize a payment
-const payment = await client.initializePayment({
-  amount: 100,
-  currency: 'ETB',
-  reference: 'order_12345',
-  description: 'Test payment',
-  webhookUrl: 'https://your-domain.com/webhook',
-});
-
-console.log('Payment initialized:', payment.id);
+### 3. Install Dependencies
+```bash
+npm install
 ```
 
-## Configuration
+## Adding New Features
 
-### Environment Variables
+### 1. Adding a New API Endpoint
+1. **Define the types** in `src/types/index.ts` (Requests, Responses, Enums).
+2. **Add validation** in `src/utils/validator.ts` if necessary.
+3. **Implement the method** in `src/client/GhionClient.ts` using the generic `apiRequest` method.
+4. **Export the types/methods** in `src/index.ts`.
+5. **Add unit tests** in `tests/unit.test.ts`.
+6. **Add integration tests** in `tests/integration.test.ts` (if applicable).
 
-Create a `.env` file in your project root:
-
-```env
-GHION_API_KEY=your_api_key_here
-GHION_API_SECRET=your_api_secret_here
-GHION_API_PASSPHRASE=your_passphrase_here
-```
-
-### Client Configuration
-
-```typescript
-const client = new GhionClient({
-  apiKey: 'your-api-key',
-  apiSecret: 'your-api-secret',
-  passphrase: 'your-passphrase',
-  baseUrl: 'https://ghion.financial/api/v1', // Optional, defaults to production
-  checkoutBaseUrl: 'https://app.ghion.financial/api/v1', // Optional, for checkout endpoints
-  timeout: 30000, // Optional, request timeout in ms
-});
-```
-
-## API Reference
-
-### Initialize Payment
-
-Create a new payment session and get available payment channels.
-
-```typescript
-const payment = await client.initializePayment({
-  amount: 100, // Required: Payment amount
-  currency: 'ETB', // Optional: Currency code (default: ETB)
-  reference: 'order_12345', // Required: Your unique reference
-  description: 'Payment description', // Optional: Payment description
-  webhookUrl: 'https://your-domain.com/webhook', // Optional: Webhook URL
-  returnUrl: 'https://your-domain.com/success', // Optional: Return URL
-  cancelUrl: 'https://your-domain.com/cancel', // Optional: Cancel URL
-  metadata: { // Optional: Additional metadata
-    orderId: '12345',
-    customerId: '67890',
-  },
-});
-```
-
-**Response:**
-```typescript
-{
-  id: string;
-  amount: number;
-  currency: string;
-  reference: string;
-  description: string;
-  status: string;
-  channels: PaymentChannel[];
-  expires_at: string;
-  created_at: string;
-}
-```
-
-### Submit Payment
-
-Submit a payment with the chosen channel and customer details (e.g., USSD push).
-
-```typescript
-const result = await client.submitPayment(paymentId, {
-  channel: 'telebirr', // Required: Channel ID from initialize response
-  phoneNumber: '+251911234567', // Optional: Customer phone number
-  accountNumber: '1234567890', // Optional: Customer account number
-});
-```
-
-**Response:**
-```typescript
-{
-  id: string;
-  status: string;
-  transaction_id?: string;
-  message: string;
-  redirect_url?: string;
-}
-```
-
-### QR & Other Payment Methods
-
-For QR-based or "Other" payment methods, you can retrieve the QR code or checkout URL.
-
-```typescript
-// Pay using QR code directly
-const qrResult = await client.payWithQR(paymentId);
-console.log('QR Image URL:', qrResult.qr_image_url);
-
-// Or get full checkout details (including QR)
-const checkoutDetails = await client.getCheckout(paymentId);
-console.log('Checkout QR:', checkoutDetails.qr);
-```
-
-### OTP Payment Flow
-
-For wallet providers that require OTP validation (e.g., YaYa Wallet).
-
-**Important:** The OTP flow requires the payment to be in the correct state before validation. You must first send OTP to prepare the payment, then validate the OTP to complete it.
-
-```typescript
-// 1. Send OTP to customer's phone
-// This prepares the payment for OTP validation
-const otpSent = await client.sendOTP(paymentId, '+251911234567');
-console.log('OTP sent:', otpSent.status);
-
-// 2. Validate OTP to complete payment
-// Only call this after OTP has been sent successfully
-const otpValidated = await client.validateOTP(paymentId, '123456');
-console.log('Payment status:', otpValidated.status);
-
-// 3. Get full payment details after successful validation
-const checkoutDetails = await client.getCheckout(paymentId);
-console.log('Full payment details:', checkoutDetails);
-```
-
-**Note:** If you receive an error "Transaction is not in a state awaiting OTP validation", ensure that:
-1. You have called `sendOTP` before `validateOTP`
-2. The payment is still in a valid state (not expired or completed)
-3. The phone number used in `sendOTP` is valid and registered with the wallet provider
-
-### Get Payment Status
-
-Check the current status of a payment.
-
-```typescript
-const status = await client.getPaymentStatus(paymentId);
-```
-
-**Response:**
-```typescript
-{
-  id: string;
-  amount: number;
-  currency: string;
-  reference: string;
-  description: string;
-  status: PaymentStatus;
-  channel?: string;
-  transaction_id?: string;
-  customer?: {
-    phone_number?: string;
-    account_number?: string;
-    name?: string;
-    email?: string;
-  };
-  created_at: string;
-  updated_at: string;
-  completed_at?: string;
-  failed_at?: string;
-  failure_reason?: string;
-}
-```
-
-### Payment Status Enum
-
-```typescript
-enum PaymentStatus {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  CANCELLED = 'cancelled',
-  EXPIRED = 'expired',
-}
-```
-
-## Webhook Handling
-
-### Verify Webhook Signature
-
-```typescript
-import express from 'express';
-
-app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
-  const signature = req.headers['x-ghion-signature'] as string;
-  
-  if (!signature) {
-    return res.status(400).json({ error: 'Missing signature' });
-  }
-
-  // Verify signature
-  const isValid = client.verifyWebhook(req.body, signature);
-  
-  if (!isValid) {
-    return res.status(401).json({ error: 'Invalid signature' });
-  }
-
-  // Process webhook...
-  res.json({ received: true });
-});
-```
-
-### Parse Webhook Event
-
-```typescript
-app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
-  const signature = req.headers['x-ghion-signature'] as string;
-
-  try {
-    const event = client.parseWebhook(req.body, signature);
-    
-    console.log('Webhook event:', event.event);
-    console.log('Payment ID:', event.data.payment_id);
-    console.log('Status:', event.data.status);
-    
-    // Handle different event types
-    switch (event.event) {
-      case WebhookEventType.TRANSACTION_COMPLETED:
-        // Payment completed successfully
-        break;
-      case WebhookEventType.TRANSACTION_FAILED:
-        // Payment failed
-        break;
-      // ... handle other events
-    }
-    
-    res.json({ received: true });
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid signature' });
-  }
-});
-```
-
-### Webhook Event Types
-
-```typescript
-enum WebhookEventType {
-  TRANSACTION_COMPLETED = 'transaction.completed',
-  TRANSACTION_FAILED = 'transaction.failed',
-  TRANSACTION_REFUNDED = 'transaction.refunded',
-  TRANSACTION_PARTIALLY_REFUNDED = 'transaction.partially_refunded',
-  TRANSACTION_EXPIRED = 'transaction.expired',
-  TRANSACTION_DISPUTED = 'transaction.disputed',
-  TRANSACTION_UPDATED = 'transaction.updated',
-}
-```
-
-## Express.js Integration
-
-Complete example with Express.js:
-
-```typescript
-import express, { Request, Response } from 'express';
-import { GhionClient, WebhookEventType } from '@ghion-finances/node-sdk';
-
-const client = new GhionClient({
-  apiKey: process.env.GHION_API_KEY,
-  apiSecret: process.env.GHION_API_SECRET,
-  passphrase: process.env.GHION_API_PASSPHRASE,
-});
-
-const app = express();
-app.use(express.json());
-
-// Initialize payment
-app.post('/api/payments/initialize', async (req: Request, res: Response) => {
-  try {
-    const payment = await client.initializePayment({
-      amount: req.body.amount,
-      currency: req.body.currency || 'ETB',
-      reference: `order_${Date.now()}`,
-      webhookUrl: `${req.protocol}://${req.get('host')}/webhook`,
-    });
-    res.json({ success: true, data: payment });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Webhook handler
-app.post('/webhook', express.raw({ type: 'application/json' }), (req: Request, res: Response) => {
-  const signature = req.headers['x-ghion-signature'] as string;
-  
-  try {
-    const event = client.parseWebhook(req.body, signature);
-    console.log('Webhook received:', event.event);
-    res.json({ received: true });
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid signature' });
-  }
-});
-
-app.listen(3000);
-```
-
-## Error Handling
-
-The SDK provides comprehensive input validation and custom error classes for different error scenarios:
-
-### Input Validation
-
-The SDK automatically validates all inputs before making API requests:
-
-```typescript
-// Payment ID validation (required for most methods)
-await client.getPaymentStatus(''); // Throws ValidationError: "Payment ID is required"
-
-// Phone number validation (for OTP and USSD)
-await client.sendOTP('payment123', ''); // Throws ValidationError: "Phone number is required"
-
-// OTP code validation
-await client.validateOTP('payment123', ''); // Throws ValidationError: "OTP code is required"
-
-// Amount validation
-await client.initializePayment({ amount: -100, reference: 'test' }); // Throws ValidationError: "Amount must be positive"
-```
-
-### Error Classes
-
-```typescript
-import {
-  GhionError,
-  AuthenticationError,
-  ApiError,
-  ValidationError,
-  NetworkError,
-  PaymentError,
-  WebhookError,
-  RateLimitError,
-} from '@ghion-finances/node-sdk';
-
-try {
-  await client.initializePayment({ amount: 100, reference: 'test' });
-} catch (error) {
-  if (error instanceof ValidationError) {
-    console.error('Validation error:', error.message);
-  } else if (error instanceof AuthenticationError) {
-    console.error('Authentication failed:', error.message);
-  } else if (error instanceof ApiError) {
-    console.error('API error:', error.message, error.statusCode);
-  } else if (error instanceof NetworkError) {
-    console.error('Network error:', error.message);
-  } else if (error instanceof RateLimitError) {
-    console.error('Rate limit exceeded, retry after:', error.retryAfter);
-  } else {
-    console.error('Unknown error:', error);
-  }
-}
-```
+### 2. Adding a New Error Type
+1. **Define the error class** in `src/errors/index.ts`.
+2. **Export the error** in `src/index.ts`.
+3. **Add tests** in `tests/unit.test.ts`.
 
 ## Testing the SDK
 
-### Unit Tests (No Credentials Required)
-
-Run the unit tests to verify the SDK builds correctly:
-
+### Running All Tests
+Run all tests across the SDK (unit tests only):
 ```bash
 npm test
 ```
 
-These tests verify:
-- SDK imports and exports
-- Client instantiation and configuration
-- Webhook signature generation and verification
-- Input validation
-
-### Integration Tests (Credentials Required)
-
-Test with real API calls using your credentials:
-
+### Running Package-Specific Tests
+Run tests for specific packages:
 ```bash
-# 1. Copy environment variables template
-cp examples/.env.example examples/.env
+# Unit tests
+npm test tests/unit.test.ts
 
-# 2. Edit examples/.env with your credentials from https://ghion.financial
-
-# 3. Run the integration tests
-npm test -- tests/integration.test.ts
+# Integration tests (requires credentials)
+npm test tests/integration.test.ts
 ```
 
-These tests verify:
-- Payment initialization with real API
-- Payment status retrieval
-- Webhook signature verification with real credentials
+### Test Coverage
+Generate coverage report:
+```bash
+npm run test:coverage
+```
 
-### Testing with cURL
+**Current Coverage:**
+- Unit tests cover client configuration, validation, crypto functions, and error handling
+- Integration tests verify real API calls for payment and bill operations
 
-For manual testing with cURL commands, see [curl-commands.md](./examples/curl-commands.md). This guide includes:
+### Unit Tests (No Credentials Required)
+Unit tests verify SDK logic without making API calls:
+- Client configuration and instantiation
+- Input validation functions
+- Cryptographic signature generation
+- Webhook signature verification
+- Error type constructors
+- Helper functions
 
-- Payment initialization
-- Payment submission
-- Payment status checking
-- Webhook testing
-- Complete test flow scripts
-- PowerShell equivalents
+Run unit tests:
+```bash
+npm test tests/unit.test.ts
+```
 
-### Examples
+### Integration Tests (Credentials Required)
+Integration tests make real API calls to verify SDK functionality with the Ghion API.
 
-See the `examples/` directory for complete working examples:
+**Setup:**
+1. Create a `.env` file in the project root:
+```env
+GHION_API_KEY=your_api_key
+GHION_API_SECRET=your_api_secret
+GHION_API_PASSPHRASE=your_passphrase
+TEST_PHONE_NUMBER=+251911234567
+TEST_OTP_CODE=123456  # For OTP validation test
+```
 
-- `quick-start.ts` - Basic SDK usage without Express
-- `express-server.ts` - Complete Express.js integration with webhooks
+2. Run integration tests:
+```bash
+npm test tests/integration.test.ts
+```
 
-For detailed information about each example, see [README.md](./examples/README.md)
+**Integration Test Coverage:**
+- **Initialize Payment**: Tests payment initialization and channel availability
+- **QR Payment**: Tests QR code generation and checkout retrieval
+- **OTP Payment**: Tests OTP sending and validation (requires phone number)
+- **Payment Status**: Tests payment status retrieval
+- **Bill Payment**: Tests bill creation, listing, and management
 
-Run examples:
+**Test Organization:**
+- Unit tests are located in `tests/unit.test.ts`
+- Integration tests are located in `tests/integration.test.ts`
+- Tests use Jest as the test runner
+
+### Running Examples
+See the `examples/` directory for complete working scripts:
 
 ```bash
 # Quick start example
@@ -454,92 +148,43 @@ npx ts-node examples/quick-start.ts
 npx ts-node examples/express-server.ts
 ```
 
-## Development
-
-### Build
-
+### CI/CD Testing
+For continuous integration, run:
 ```bash
-npm run build
+# Run all tests with coverage
+npm run test:coverage
 ```
 
-### Watch Mode
+## Code Quality & Guidelines
 
-```bash
-npm run dev
-```
+- **Style**: Use Prettier to format code before committing (`npm run format`).
+- **Linting**: Use ESLint to ensure code quality (`npm run lint`).
+- **TypeScript**: All code must be written in TypeScript with proper type definitions.
+- **Documentation**: All exported functions, types, and constants must have proper JSDoc comments.
+- **Error Handling**: Use the custom error types in `src/errors` instead of generic errors. Never expose sensitive information in error messages. Redact sensitive data from logs.
 
-### Lint
+## Security Considerations
 
-```bash
-npm run lint
-npm run lint:fix
-```
-
-### Format
-
-```bash
-npm run format
-```
-
-### CI/CD
-
-This project uses GitHub Actions for CI/CD. The pipeline automatically:
-- Runs tests on every push and pull request
-- Publishes to npm when a new release is created
-
-For detailed setup instructions, see [docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md).
-
-### Test
-
-```bash
-npm test
-npm run test:watch
-```
-
-## Security
-
-- **HMAC-SHA256 Authentication**: All API requests are signed using HMAC-SHA256
-- **Timing-Safe Comparison**: Webhook signatures use timing-safe comparison to prevent timing attacks
-- **Input Validation**: All inputs are validated before sending to the API
-- **Secure Defaults**: Timeout protection and secure defaults out of the box
-
-## Authentication
-
-The SDK uses HMAC-SHA256 request signing for authentication:
-
-```
-signature = base64( hmac_sha256( timestamp + METHOD + path + body, api_secret ) )
-```
-
-Headers sent with every API request:
-
-| Header | Value |
-|--------|-------|
-| `X-Ghion-Key` | Your API key |
-| `X-Ghion-Timestamp` | Unix timestamp (seconds) |
-| `X-Ghion-Signature` | HMAC-SHA256 signature |
-| `X-Ghion-Passphrase` | Your API passphrase |
-
-**Important**: The timestamp must be within **30 seconds** of the server time. Ensure your system clock is synchronized via NTP.
-
-## Requirements
-
-- Node.js >= 18.0.0
-- TypeScript >= 4.0.0 (for development)
-
-## License
-
-- See [MIT License ](./LICENSE) file for details
-
-## Support
-
-For issues, questions, or contributions, please visit the [Ghion Finances](https://ghion.financial) website or contact support.
+- **HMAC-SHA256 Authentication**: All API requests are signed using HMAC-SHA256.
+- **Timing-Safe Comparison**: Webhook signatures use timing-safe comparison to prevent timing attacks.
+- **Input Validation**: All inputs are validated before being sent over the network.
+- **Sensitive Data Redaction**: Error responses automatically redact sensitive information (API keys, passphrases, signatures).
 
 ## Contributing
 
 Contributions are welcome! Please ensure:
+1. Code adheres to existing style (ESLint + Prettier).
+2. All tests pass (`npm test`).
+3. TypeScript types are properly defined.
+4. Documentation is updated.
+5. Changes are backwards compatible when possible.
 
-1. Code adheres to existing style (ESLint + Prettier)
-2. All tests pass
-3. TypeScript types are properly defined
-4. Documentation is updated
+Please open an issue to discuss proposed changes before creating a pull request.
+
+For release guidelines, see [RELEASE.md](RELEASE.md).
+
+For developer usage guide, see [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md).
+
+## License
+
+See [LICENSE](LICENSE) file for details.

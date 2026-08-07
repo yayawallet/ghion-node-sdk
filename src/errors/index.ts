@@ -77,6 +77,18 @@ export class PaymentError extends GhionError {
 }
 
 /**
+ * Bill error - bill processing failures
+ */
+export class BillError extends GhionError {
+  public readonly billId?: string;
+
+  constructor(message: string, billId?: string, details?: Record<string, unknown>) {
+    super(message, 'BILL_ERROR', { billId, ...details });
+    this.billId = billId;
+  }
+}
+
+/**
  * Webhook error - webhook signature verification or processing failures
  */
 export class WebhookError extends GhionError {

@@ -261,3 +261,352 @@ export interface ApiError {
  * HTTP method types
  */
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+
+/**
+ * Bill status enum
+ */
+export enum BillStatus {
+  PENDING = 'pending',
+  PAID = 'paid',
+  FORWARDED = 'forwarded',
+  CANCELLED = 'cancelled',
+  EXPIRED = 'expired',
+}
+
+/**
+ * Penalty configuration for late payments
+ */
+export interface Penalty {
+  type: 'fixed' | 'percentage';
+  fee: number;
+  max_amount: number;
+  recurring: 'daily' | 'weekly' | 'monthly' | 'once';
+}
+
+/**
+ * Create a single bill request
+ */
+export interface CreateBillRequest {
+  bill_id: string;
+  amount: number;
+  currency?: string;
+  due_date: string; // Y-m-d format
+  start_date?: string; // Y-m-d format
+  expires_date?: string; // Y-m-d format
+  customer_name?: string;
+  customer_phone?: string;
+  customer_email?: string;
+  customer_id?: string;
+  description?: string;
+  bill_code?: string;
+  cluster?: string;
+  penalty?: Penalty;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Bill response
+ */
+export interface BillResponse {
+  id: string;
+  bill_id: string;
+  bill_code?: string;
+  cluster?: string;
+  customer_name?: string;
+  customer_phone?: string;
+  customer_id?: string;
+  amount: number;
+  service_charge: number;
+  penalty_amount: number;
+  total_due: number;
+  paid: number;
+  balance_due: number;
+  currency: string;
+  status: BillStatus;
+  due_date: string;
+  is_overdue: boolean;
+  days_overdue: number;
+  created_at: string;
+  bill_season?: string;
+  customer_email?: string;
+  description?: string;
+  start_date?: string;
+  expires_date?: string;
+  original_due_date?: string;
+  paid_at?: string;
+  share_token?: string;
+  penalty?: Penalty;
+  metadata?: Record<string, unknown>;
+  payments?: unknown[];
+}
+
+/**
+ * Bulk create bills request
+ */
+export interface BulkCreateBillsRequest {
+  bills: Omit<CreateBillRequest, 'currency'>[];
+}
+
+/**
+ * Bulk create bills response
+ */
+export interface BulkCreateBillsResponse {
+  created_count: number;
+  error_count: number;
+  created: BillResponse[];
+  errors: Array<{
+    bill_id: string;
+    error: string;
+  }>;
+}
+
+/**
+ * List bills query parameters
+ */
+export interface ListBillsRequest {
+  status?: BillStatus;
+  search?: string;
+  cluster?: string;
+  bill_code?: string;
+  from?: string; // Y-m-d format
+  to?: string; // Y-m-d format
+  page?: number;
+  limit?: number;
+}
+
+/**
+ * List bills response
+ */
+export interface ListBillsResponse {
+  items: BillResponse[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/**
+ * Bill statistics
+ */
+export interface BillStatistics {
+  pending: number;
+  paid: number;
+  forwarded: number;
+  overdue: number;
+  total_amount: number;
+  total_paid: number;
+}
+
+/**
+ * Bill dashboard analytics
+ */
+export interface BillDashboard {
+  summary: {
+    total_bills: number;
+    pending: number;
+    paid: number;
+    forwarded: number;
+    cancelled: number;
+    expired: number;
+    overdue: number;
+    total_amount: number;
+    total_paid: number;
+    total_outstanding: number;
+    avg_bill_amount: number;
+    unique_customers: number;
+  };
+  by_cluster?: Array<{
+    cluster: string;
+    count: number;
+    amount: number;
+    paid: number;
+  }>;
+  by_bill_code?: Array<{
+    bill_code: string;
+    count: number;
+    amount: number;
+    paid: number;
+  }>;
+  trend?: Array<{
+    date: string;
+    bills_created: number;
+    amount_created: number;
+    bills_paid: number;
+    amount_paid: number;
+  }>;
+}
+
+/**
+ * Payment link response
+ */
+export interface PaymentLinkResponse {
+  checkout_url: string;
+}
+
+/**
+ * Public bill lookup request
+ */
+export interface PublicBillLookupRequest {
+  biller_code: string;
+  bill_id: string;
+}
+
+/**
+ * Public bill lookup response
+ */
+export interface PublicBillLookupResponse {
+  id: string;
+  bill_id: string;
+  bill_code?: string;
+  bill_season?: string;
+  cluster?: string;
+  ext_customer_id?: string;
+  customer_name?: string;
+  description?: string;
+  amount: number;
+  service_charge: number;
+  penalty_amount: number;
+  total_due: number;
+  amount_due: number;
+  paid: number;
+  currency: string;
+  client?: {
+    uniqueName: string;
+    name: string;
+  };
+  start_at?: string;
+  due_at?: string;
+  start_at_time?: number;
+  due_at_time?: number;
+  expires_at?: string;
+  original_due_at?: string;
+  payment_status: string;
+  penalty_type?: string;
+  penalty_fee?: number;
+  max_penalty_amount?: number;
+  penalty_recurring?: string;
+}
+
+/**
+ * Biller settings request
+ */
+export interface BillerSettingsRequest {
+  biller_code?: string;
+  biller_name?: string;
+  biller_category?: string;
+  biller_description?: string;
+  icon_url?: string;
+  service_charge_rate?: number;
+  service_charge_type?: string;
+  min_service_charge?: number;
+  max_service_charge?: number;
+  service_charge_ranges?: Array<{
+    min_amount: number;
+    max_amount: number;
+    rate: number;
+  }>;
+  clusters?: string[];
+  bill_codes?: Array<{
+    code: string;
+    name: string;
+    description?: string;
+  }>;
+  webhook_url?: string;
+  webhook_secret?: string;
+  settlement_bank_code?: string;
+  settlement_account_number?: string;
+  settlement_account_name?: string;
+  short_code?: string;
+  biller_prefix?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Biller settings response
+ */
+export interface BillerSettingsResponse {
+  configured: boolean;
+  settings?: {
+    id: string;
+    biller_code: string;
+    biller_name: string;
+    biller_category?: string;
+    biller_description?: string;
+    icon_url?: string;
+    service_charge_rate: number;
+    service_charge_type: string;
+    min_service_charge?: number;
+    max_service_charge?: number;
+    service_charge_ranges?: Array<{
+      min_amount: number;
+      max_amount: number;
+      rate: number;
+    }>;
+    clusters: string[];
+    bill_codes: Array<{
+      code: string;
+      name: string;
+      description?: string;
+    }>;
+    webhook_url?: string;
+    webhook_secret_configured: boolean;
+    settlement_bank_code?: string;
+    settlement_account_number?: string;
+    settlement_account_name?: string;
+    settlement_accounts?: Array<unknown>;
+    short_code?: string;
+    biller_prefix?: string;
+    is_active: boolean;
+    requires_external_settlement: boolean;
+    config?: Record<string, unknown>;
+    created_at: string;
+    updated_at: string;
+  };
+}
+
+/**
+ * Update bill request (partial update - only provided fields are updated)
+ */
+export interface UpdateBillRequest {
+  amount?: number;
+  currency?: string;
+  due_date?: string;
+  start_date?: string;
+  expires_date?: string;
+  customer_name?: string;
+  customer_phone?: string;
+  customer_email?: string;
+  customer_id?: string;
+  description?: string;
+  bill_code?: string;
+  cluster?: string;
+  penalty?: Penalty;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Delete bill response
+ */
+export interface DeleteBillResponse {
+  message: string;
+}
+
+/**
+ * Record manual payment request
+ */
+export interface RecordManualPaymentRequest {
+  amount: number;
+  source?: string;
+  payment_method?: string;
+  reference?: string;
+  note?: string;
+}
+
+/**
+ * Record manual payment response
+ */
+export interface RecordManualPaymentResponse {
+  payment_id: string;
+  amount: number;
+  bill_status: string;
+  balance_due: number;
+}

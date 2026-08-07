@@ -19,6 +19,14 @@ import {
   validatePaymentId,
   validatePhoneNumber,
   validateOTPCode,
+  validateCreateBillRequest,
+  validateBulkCreateBillsRequest,
+  validateListBillsRequest,
+  validatePublicBillLookupRequest,
+  validateBillId,
+  validateRecordManualPaymentRequest,
+  validateBillerSettingsRequest,
+  validateBillDashboardRequest,
 } from '../utils/validator';
 import {
   InitializePaymentRequest,
@@ -31,6 +39,23 @@ import {
   QRPaymentResponse,
   OTPSendResponse,
   OTPValidateResponse,
+  CreateBillRequest,
+  BillResponse,
+  BulkCreateBillsRequest,
+  BulkCreateBillsResponse,
+  ListBillsRequest,
+  ListBillsResponse,
+  BillStatistics,
+  BillDashboard,
+  PaymentLinkResponse,
+  PublicBillLookupRequest,
+  PublicBillLookupResponse,
+  BillerSettingsRequest,
+  BillerSettingsResponse,
+  UpdateBillRequest,
+  DeleteBillResponse,
+  RecordManualPaymentRequest,
+  RecordManualPaymentResponse,
 } from '../types';
 
 /**
@@ -195,6 +220,218 @@ export class GhionClient {
   }
 
   /**
+   * Create a single bill
+   * @param request - Bill creation parameters
+   * @returns Created bill response
+   */
+  async createBill(request: CreateBillRequest): Promise<BillResponse> {
+    validateCreateBillRequest(request);
+
+    const body = {
+      bill_id: request.bill_id,
+      amount: request.amount,
+      currency: request.currency || 'ETB',
+      due_date: request.due_date,
+      start_date: request.start_date,
+      expires_date: request.expires_date,
+      customer_name: request.customer_name,
+      customer_phone: request.customer_phone,
+      customer_email: request.customer_email,
+      customer_id: request.customer_id,
+      description: request.description,
+      bill_code: request.bill_code,
+      cluster: request.cluster,
+      penalty: request.penalty,
+      metadata: request.metadata,
+    };
+
+    return this.apiRequest<BillResponse>('POST', '/dashboard/bills', body);
+  }
+
+  /**
+   * Create multiple bills in a single request
+   * @param request - Bulk bill creation parameters
+   * @returns Bulk creation response with created bills and errors
+   */
+  async createBulkBills(request: BulkCreateBillsRequest): Promise<BulkCreateBillsResponse> {
+    validateBulkCreateBillsRequest(request);
+
+    const body = {
+      bills: request.bills,
+    };
+
+    return this.apiRequest<BulkCreateBillsResponse>('POST', '/dashboard/bills/bulk', body);
+  }
+
+  /**
+   * List bills with optional filters
+   * @param request - List bills query parameters
+   * @returns Paginated list of bills
+   */
+  async listBills(request?: ListBillsRequest): Promise<ListBillsResponse> {
+    if (request) {
+      validateListBillsRequest(request);
+    }
+
+    // Build query parameters with sorted keys for consistent signature
+    const params: Record<string, string> = {};
+    if (request?.status) params.status = request.status;
+    if (request?.search) params.search = request.search;
+    if (request?.cluster) params.cluster = request.cluster;
+    if (request?.bill_code) params.bill_code = request.bill_code;
+    if (request?.from) params.from = request.from;
+    if (request?.to) params.to = request.to;
+    if (request?.page) params.page = String(request.page);
+    if (request?.limit) params.limit = String(request.limit);
+
+    // Sort keys alphabetically for consistent signature
+    const sortedKeys = Object.keys(params).sort();
+    const queryString = sortedKeys.map(key => `${key}=${encodeURIComponent(params[key])}`).join('&');
+    const path = queryString ? `/dashboard/bills?${queryString}` : '/dashboard/bills';
+
+    return this.apiRequest<ListBillsResponse>('GET', path);
+  }
+
+  /**
+   * Get bill statistics
+   * @returns Aggregate counts and amounts for bills
+   */
+  async getBillStatistics(): Promise<BillStatistics> {
+    return this.apiRequest<BillStatistics>('GET', '/dashboard/bills/statistics');
+  }
+
+  /**
+   * Get bill dashboard analytics
+   * @param from - Start date (Y-m-d format)
+   * @param to - End date (Y-m-d format)
+   * @returns Detailed analytics including trends and breakdowns
+   */
+  async getBillDashboard(from?: string, to?: string): Promise<BillDashboard> {
+    validateBillDashboardRequest(from, to);
+    const params = new URLSearchParams();
+    if (from) params.append('from', from);
+    if (to) params.append('to', to);
+
+    const queryString = params.toString();
+    const path = queryString ? `/dashboard/bills/dashboard?${queryString}` : '/dashboard/bills/dashboard';
+
+    return this.apiRequest<BillDashboard>('GET', path);
+  }
+
+  /**
+   * Get payment link for a bill
+   * @param billId - Bill ID
+   * @returns Payment link URL
+   */
+  async getBillPaymentLink(billId: string): Promise<PaymentLinkResponse> {
+    validatePaymentId(billId);
+    return this.apiRequest<PaymentLinkResponse>('GET', `/dashboard/bills/${billId}/checkout-url`);
+  }
+
+  /**
+   * Public bill lookup (no authentication required)
+   * Used by bank branches and mobile banking apps
+   * @param request - Public lookup parameters
+   * @returns Bill information
+   */
+  async publicBillLookup(request: PublicBillLookupRequest): Promise<PublicBillLookupResponse> {
+    validatePublicBillLookupRequest(request);
+
+    const body = {
+      biller_code: request.biller_code,
+      bill_id: request.bill_id,
+    };
+
+    // Public endpoint uses different base URL and no authentication
+    return this.apiRequest<PublicBillLookupResponse>('POST', '/public/bill/find', body, this.baseUrl, true);
+  }
+
+  /**
+   * Get biller settings
+   * @returns Biller settings including biller_code needed for public lookup
+   */
+  async getBillerSettings(): Promise<BillerSettingsResponse> {
+    return this.apiRequest<BillerSettingsResponse>('GET', '/dashboard/biller-settings');
+  }
+
+  /**
+   * Update biller settings
+   * @param request - Biller settings to update
+   * @returns Updated biller settings
+   */
+  async updateBillerSettings(request: BillerSettingsRequest): Promise<BillerSettingsResponse> {
+    validateBillerSettingsRequest(request);
+    return this.apiRequest<BillerSettingsResponse>('PUT', '/dashboard/biller-settings', request);
+  }
+
+  /**
+   * Get bill detail by ID
+   * @param id - Bill ID
+   * @returns Bill detail with full information
+   */
+  async getBillDetail(id: string): Promise<BillResponse> {
+    validateBillId(id);
+    return this.apiRequest<BillResponse>('GET', `/dashboard/bills/${id}`);
+  }
+
+  /**
+   * Update a bill (partial update - only provided fields are updated)
+   * @param id - Bill ID
+   * @param request - Fields to update
+   * @returns Updated bill detail
+   */
+  async updateBill(id: string, request: UpdateBillRequest): Promise<BillResponse> {
+    validateBillId(id);
+    const body: Record<string, unknown> = {};
+    if (request.amount !== undefined) body.amount = request.amount;
+    if (request.currency !== undefined) body.currency = request.currency;
+    if (request.due_date !== undefined) body.due_date = request.due_date;
+    if (request.start_date !== undefined) body.start_date = request.start_date;
+    if (request.expires_date !== undefined) body.expires_date = request.expires_date;
+    if (request.customer_name !== undefined) body.customer_name = request.customer_name;
+    if (request.customer_phone !== undefined) body.customer_phone = request.customer_phone;
+    if (request.customer_email !== undefined) body.customer_email = request.customer_email;
+    if (request.customer_id !== undefined) body.customer_id = request.customer_id;
+    if (request.description !== undefined) body.description = request.description;
+    if (request.bill_code !== undefined) body.bill_code = request.bill_code;
+    if (request.cluster !== undefined) body.cluster = request.cluster;
+    if (request.penalty !== undefined) body.penalty = request.penalty;
+    if (request.metadata !== undefined) body.metadata = request.metadata;
+
+    return this.apiRequest<BillResponse>('PUT', `/dashboard/bills/${id}`, body);
+  }
+
+  /**
+   * Delete a bill (only bills with no payments can be deleted)
+   * @param id - Bill ID
+   * @returns Deletion confirmation message
+   */
+  async deleteBill(id: string): Promise<DeleteBillResponse> {
+    validateBillId(id);
+    return this.apiRequest<DeleteBillResponse>('DELETE', `/dashboard/bills/${id}`);
+  }
+
+  /**
+   * Record a manual payment against a bill (e.g., cash, bank transfer)
+   * This does not process an actual payment — it only updates the bill's balance and status for reconciliation purposes
+   * @param id - Bill ID
+   * @param request - Manual payment details
+   * @returns Payment record with updated bill status
+   */
+  async recordManualPayment(id: string, request: RecordManualPaymentRequest): Promise<RecordManualPaymentResponse> {
+    validateBillId(id);
+    validateRecordManualPaymentRequest(request);
+    const body = {
+      amount: request.amount,
+      source: request.source || 'manual',
+      payment_method: request.payment_method || 'cash',
+      reference: request.reference,
+      note: request.note,
+    };
+    return this.apiRequest<RecordManualPaymentResponse>('POST', `/dashboard/bills/${id}/payments`, body);
+  }
+
+  /**
    * Make authenticated API request
    * @private
    */
@@ -218,7 +455,9 @@ export class GhionClient {
 
     if (!skipAuth) {
       const timestamp = getCurrentTimestamp();
-      const signature = generateSignature(timestamp, method, fullPath, body, this.apiSecret);
+      // For GET requests, use only pathname for signature (exclude query string)
+      const signaturePath = method === 'GET' ? parsedUrl.pathname : fullPath;
+      const signature = generateSignature(timestamp, method, signaturePath, body, this.apiSecret);
       
       headers['X-Ghion-Key'] = this.apiKey;
       headers['X-Ghion-Timestamp'] = String(timestamp);

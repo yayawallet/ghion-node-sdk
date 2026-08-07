@@ -3,7 +3,7 @@
  * These tests verify SDK functionality without making real API calls
  */
 
-import { GhionClient, PaymentStatus, WebhookEventType, ValidationError, ApiError, RateLimitError } from '../src';
+import { GhionClient, PaymentStatus, WebhookEventType, ValidationError, ApiError, RateLimitError, BillStatus } from '../src';
 import * as crypto from 'crypto';
 
 // Mock fetch globally
@@ -34,6 +34,12 @@ describe('GhionClient', () => {
     it('should export WebhookEventType enum', () => {
       expect(WebhookEventType).toBeDefined();
       expect(WebhookEventType.TRANSACTION_COMPLETED).toBe('transaction.completed');
+    });
+
+    it('should export BillStatus enum', () => {
+      expect(BillStatus).toBeDefined();
+      expect(BillStatus.PENDING).toBe('pending');
+      expect(BillStatus.PAID).toBe('paid');
     });
   });
 
@@ -149,6 +155,78 @@ describe('GhionClient', () => {
     it('should throw ValidationError for empty phone in validateOTP', async () => {
       await expect(
         client.validateOTP('p1', '123456', '')
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty bill_id in createBill', async () => {
+      await expect(
+        client.createBill({ bill_id: '', amount: 100, due_date: '2026-09-01' })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for invalid date format in createBill', async () => {
+      await expect(
+        client.createBill({ bill_id: 'INV-001', amount: 100, due_date: 'invalid-date' })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty biller_code in publicBillLookup', async () => {
+      await expect(
+        client.publicBillLookup({ biller_code: '', bill_id: 'INV-001' })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty bill_id in publicBillLookup', async () => {
+      await expect(
+        client.publicBillLookup({ biller_code: 'TEST', bill_id: '' })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty bill id in getBillDetail', async () => {
+      await expect(
+        client.getBillDetail('')
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty bill id in updateBill', async () => {
+      await expect(
+        client.updateBill('', { amount: 100 })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty bill id in deleteBill', async () => {
+      await expect(
+        client.deleteBill('')
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty bill id in recordManualPayment', async () => {
+      await expect(
+        client.recordManualPayment('', { amount: 100 })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for zero amount in recordManualPayment', async () => {
+      await expect(
+        client.recordManualPayment('bill-id', { amount: 0 })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for invalid date format in getBillDashboard', async () => {
+      await expect(
+        client.getBillDashboard('invalid-date', '2026-08-31')
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for negative service charge rate in updateBillerSettings', async () => {
+      await expect(
+        client.updateBillerSettings({ service_charge_rate: -0.05 })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for invalid clusters array in updateBillerSettings', async () => {
+      await expect(
+        client.updateBillerSettings({ clusters: 'not-an-array' as any })
       ).rejects.toThrow(ValidationError);
     });
   });

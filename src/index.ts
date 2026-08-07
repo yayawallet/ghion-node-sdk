@@ -37,10 +37,28 @@ export type {
   Provider,
   QRInfo,
   Merchant,
+  CreateBillRequest,
+  BillResponse,
+  BulkCreateBillsRequest,
+  BulkCreateBillsResponse,
+  ListBillsRequest,
+  ListBillsResponse,
+  BillStatistics,
+  BillDashboard,
+  PaymentLinkResponse,
+  PublicBillLookupRequest,
+  PublicBillLookupResponse,
+  BillerSettingsRequest,
+  BillerSettingsResponse,
+  UpdateBillRequest,
+  DeleteBillResponse,
+  RecordManualPaymentRequest,
+  RecordManualPaymentResponse,
+  Penalty,
 } from './types';
 
 // Enums
-export { PaymentStatus, WebhookEventType } from './types';
+export { PaymentStatus, WebhookEventType, BillStatus } from './types';
 
 // Errors
 export {
@@ -51,6 +69,7 @@ export {
   ValidationError,
   NetworkError,
   PaymentError,
+  BillError,
   WebhookError,
   RateLimitError,
 } from './errors';
