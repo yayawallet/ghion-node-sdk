@@ -111,7 +111,7 @@ npm test tests/unit.test.ts
 Integration tests make real API calls to verify SDK functionality with the Ghion API.
 
 **Setup:**
-1. Create a `.env` file in the project root:
+1. Create a `.env` file in the examples/ directory:
 ```env
 GHION_API_KEY=your_api_key
 GHION_API_SECRET=your_api_secret
