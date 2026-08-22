@@ -14,6 +14,9 @@ A type-safe Node.js SDK for the Ghion Finances payment gateway. Built with secur
 - **Multi-Channel**: Support for USSD, QR, OTP, and card payment methods
 - **Real-time**: Built-in support for real-time payment status monitoring
 - **Bill Payment**: Complete bill management API for creating, listing, and analyzing bills
+- **Auto-Generated Bill IDs**: Support for optional bill_id with auto-generation
+- **Payment Reminders**: Send payment reminders to customers via email and SMS
+- **Checkout Initiation**: Programmatically generate payment links for bills
 
 ## Repository Structure
 

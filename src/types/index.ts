@@ -287,7 +287,7 @@ export interface Penalty {
  * Create a single bill request
  */
 export interface CreateBillRequest {
-  bill_id: string;
+  bill_id?: string; // Optional - if omitted, one will be auto-generated
   amount: number;
   currency?: string;
   due_date: string; // Y-m-d format
@@ -609,4 +609,37 @@ export interface RecordManualPaymentResponse {
   amount: number;
   bill_status: string;
   balance_due: number;
+}
+
+/**
+ * Send payment reminder request
+ */
+export interface SendPaymentReminderRequest {
+  message?: string;
+}
+
+/**
+ * Send payment reminder response
+ */
+export interface SendPaymentReminderResponse {
+  sent: boolean;
+  reminder_count: number;
+  last_reminder_sent_at: string;
+}
+
+/**
+ * Generate bill ID response
+ */
+export interface GenerateBillIdResponse {
+  bill_id: string;
+}
+
+/**
+ * Initiate checkout response
+ */
+export interface InitiateCheckoutResponse {
+  payment_link_slug: string;
+  balance_due: number;
+  currency: string;
+  checkout_url: string;
 }

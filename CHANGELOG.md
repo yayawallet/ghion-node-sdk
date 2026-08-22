@@ -1,5 +1,23 @@
 ## Changelog
 
+### 1.5.0 (2026-08-22)
+
+**New Features:**
+- Added `sendPaymentReminder` method to send payment reminders to customers via email and SMS
+- Added `generateBillId` method to generate suggested auto-generated bill IDs before creating bills
+- Added `initiateCheckout` method to initiate checkout for bills and ensure payment links exist
+- Made `bill_id` field optional in `CreateBillRequest` - if omitted, the API will auto-generate one
+- Added `SendPaymentReminderRequest` and `SendPaymentReminderResponse` types
+- Added `GenerateBillIdResponse` type
+- Added `InitiateCheckoutResponse` type
+- Added validator for `SendPaymentReminderRequest`
+
+**Improvements:**
+- Updated bill creation validator to accept optional bill_id
+- Updated documentation with examples for new endpoints
+- Added integration tests for all new bill payment endpoints
+- Enhanced developer guide with usage examples for generateBillId and initiateCheckout
+
 ### 1.4.0 (2026-08-06)
 
 **New Features:**

@@ -54,6 +54,10 @@ export type {
   DeleteBillResponse,
   RecordManualPaymentRequest,
   RecordManualPaymentResponse,
+  SendPaymentReminderRequest,
+  SendPaymentReminderResponse,
+  GenerateBillIdResponse,
+  InitiateCheckoutResponse,
   Penalty,
 } from './types';
 

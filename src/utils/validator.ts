@@ -1,5 +1,5 @@
 import { ValidationError } from '../errors';
-import { InitializePaymentRequest, SubmitPaymentRequest, CreateBillRequest, BulkCreateBillsRequest, ListBillsRequest, PublicBillLookupRequest, RecordManualPaymentRequest, BillerSettingsRequest } from '../types';
+import { InitializePaymentRequest, SubmitPaymentRequest, CreateBillRequest, BulkCreateBillsRequest, ListBillsRequest, PublicBillLookupRequest, RecordManualPaymentRequest, BillerSettingsRequest, SendPaymentReminderRequest } from '../types';
 
 /**
  * Helper function to validate non-empty strings
@@ -123,7 +123,7 @@ function isValidDate(dateString: string): boolean {
  * Validate create bill request
  */
 export function validateCreateBillRequest(data: CreateBillRequest): void {
-  requireNonEmptyString(data.bill_id, 'Bill ID');
+  requireStringIfPresent(data.bill_id, 'Bill ID');
   
   if (!data.amount || typeof data.amount !== 'number' || data.amount <= 0) {
     throw new ValidationError('Amount must be a positive number', 'amount', data.amount);
@@ -290,4 +290,11 @@ export function validateBillDashboardRequest(from?: string, to?: string): void {
 function isValidEmail(email: string): boolean {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
+}
+
+/**
+ * Validate send payment reminder request
+ */
+export function validateSendPaymentReminderRequest(data: SendPaymentReminderRequest): void {
+  requireStringIfPresent(data.message, 'Message');
 }
