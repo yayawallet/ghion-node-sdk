@@ -27,7 +27,6 @@ express-sdk/
 │   ├── types/            # TypeScript type definitions
 │   ├── errors/           # Custom error classes
 │   ├── utils/            # Utility functions (crypto, validation)
-│   └── middleware/       # Express.js middleware for webhooks
 ├── examples/             # Usage examples (Express server, quick start)
 ├── tests/                # Test files (unit and integration)
 ├── docs/                 # Additional documentation
