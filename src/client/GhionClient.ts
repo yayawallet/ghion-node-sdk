@@ -27,6 +27,7 @@ import {
   validateRecordManualPaymentRequest,
   validateBillerSettingsRequest,
   validateBillDashboardRequest,
+  validateSendPaymentReminderRequest,
 } from '../utils/validator';
 import {
   InitializePaymentRequest,
@@ -56,6 +57,10 @@ import {
   DeleteBillResponse,
   RecordManualPaymentRequest,
   RecordManualPaymentResponse,
+  SendPaymentReminderRequest,
+  SendPaymentReminderResponse,
+  GenerateBillIdResponse,
+  InitiateCheckoutResponse,
 } from '../types';
 
 /**
@@ -429,6 +434,40 @@ export class GhionClient {
       note: request.note,
     };
     return this.apiRequest<RecordManualPaymentResponse>('POST', `/dashboard/bills/${id}/payments`, body);
+  }
+
+  /**
+   * Send a payment reminder to the customer via email and SMS
+   * @param id - Bill ID
+   * @param request - Optional custom message
+   * @returns Reminder confirmation with count and timestamp
+   */
+  async sendPaymentReminder(id: string, request?: SendPaymentReminderRequest): Promise<SendPaymentReminderResponse> {
+    validateBillId(id);
+    if (request) {
+      validateSendPaymentReminderRequest(request);
+    }
+    const body = request ? { message: request.message } : {};
+    return this.apiRequest<SendPaymentReminderResponse>('POST', `/dashboard/bills/${id}/send-reminder`, body);
+  }
+
+  /**
+   * Generate a bill ID
+   * @returns Suggested auto-generated bill ID
+   */
+  async generateBillId(): Promise<GenerateBillIdResponse> {
+    return this.apiRequest<GenerateBillIdResponse>('GET', '/dashboard/bills/generate-id');
+  }
+
+  /**
+   * Initiate checkout for a bill
+   * Ensures a PaymentLink exists for the bill (creates if needed)
+   * @param id - Bill ID
+   * @returns Checkout information with payment link
+   */
+  async initiateCheckout(id: string): Promise<InitiateCheckoutResponse> {
+    validateBillId(id);
+    return this.apiRequest<InitiateCheckoutResponse>('POST', `/dashboard/bills/${id}/initiate-checkout`);
   }
 
   /**

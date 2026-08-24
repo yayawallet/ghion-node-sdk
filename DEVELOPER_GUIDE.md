@@ -149,7 +149,7 @@ const { BillStatus } = require('@ghion-finances/node-sdk');
 app.post('/api/bills/create', async (req, res) => {
   try {
     const bill = await client.createBill({
-      bill_id: `INV-${Date.now()}`, // Your unique bill identifier (max 100 chars)
+      bill_id: `INV-${Date.now()}`, // Optional: Your unique bill identifier (max 100 chars). If omitted, one will be auto-generated
       amount: 500.00,
       currency: 'ETB',
       due_date: '2026-09-01', // Due date in Y-m-d format
@@ -182,10 +182,32 @@ app.post('/api/bills/create', async (req, res) => {
 ```
 
 **Important Notes:**
-- `bill_id` must be unique per merchant (max 100 characters)
+- `bill_id` is now optional (max 100 characters). If omitted, the API will auto-generate one
+- You can use `generateBillId()` to get a suggested auto-generated bill ID before creating a bill
 - `customer_phone` must be in international format (e.g., +251911234567) for YaYa Wallet mini-app matching
 - Dates must be in Y-m-d format (YYYY-MM-DD)
 - The response includes a `share_token` for building payment links
+
+#### Generate Bill ID
+
+Generate a suggested auto-generated bill ID before creating a bill.
+
+```javascript
+app.get('/api/bills/generate-id', async (req, res) => {
+  try {
+    const result = await client.generateBillId();
+
+    res.json({
+      success: true,
+      bill_id: result.bill_id,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+```
+
+**Use Case:** Use this to preview what the auto-generated bill ID would be, or to generate IDs in bulk before creating bills.
 
 #### Bulk Bill Creation
 
@@ -381,6 +403,35 @@ app.post('/api/bills/:id/payments/manual', async (req, res) => {
 });
 ```
 
+#### Send Payment Reminder
+
+Send payment reminders to customers via email and SMS to encourage timely payments. This is useful for following up on overdue or pending bills.
+
+```javascript
+app.post('/api/bills/:id/send-reminder', async (req, res) => {
+  try {
+    const reminder = await client.sendPaymentReminder(req.params.id, {
+      message: req.body.message, // Optional custom message
+    });
+
+    res.json({
+      success: true,
+      sent: reminder.sent,
+      reminder_count: reminder.reminder_count,
+      last_reminder_sent_at: reminder.last_reminder_sent_at,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+```
+
+**Important Notes:**
+- The message parameter is optional - if not provided, a default reminder message will be sent
+- Requires the `bill_payment.reminders.send` permission
+- The response includes the total reminder count and timestamp of the last reminder sent
+- Reminders are sent via both email and SMS to the customer
+
 #### Biller Settings
 
 Configure your biller settings including biller code, clusters, bill codes, and webhook configuration.
@@ -462,6 +513,34 @@ app.get('/api/public/bill/:billerCode/:billId', async (req, res) => {
 ```
 
 **Note:** This endpoint does not require authentication and is designed for public integration with third-party banking systems.
+
+#### Initiate Checkout
+
+Initiate checkout for a bill to ensure a payment link exists. This creates a payment link if one doesn't already exist.
+
+```javascript
+app.post('/api/bills/:id/initiate-checkout', async (req, res) => {
+  try {
+    const checkout = await client.initiateCheckout(req.params.id);
+
+    res.json({
+      success: true,
+      payment_link_slug: checkout.payment_link_slug,
+      balance_due: checkout.balance_due,
+      currency: checkout.currency,
+      checkout_url: checkout.checkout_url,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+```
+
+**Important Notes:**
+- This endpoint ensures a payment link exists for the bill (creates if needed)
+- Returns the checkout URL directly, which can be shared with customers
+- Useful when you need to programmatically generate payment links for bills
+- The `payment_link_slug` can be used to construct custom URLs
 
 ### 4. Error Handling
 

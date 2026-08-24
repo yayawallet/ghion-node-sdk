@@ -158,11 +158,6 @@ describe('GhionClient', () => {
       ).rejects.toThrow(ValidationError);
     });
 
-    it('should throw ValidationError for empty bill_id in createBill', async () => {
-      await expect(
-        client.createBill({ bill_id: '', amount: 100, due_date: '2026-09-01' })
-      ).rejects.toThrow(ValidationError);
-    });
 
     it('should throw ValidationError for invalid date format in createBill', async () => {
       await expect(
@@ -227,6 +222,12 @@ describe('GhionClient', () => {
     it('should throw ValidationError for invalid clusters array in updateBillerSettings', async () => {
       await expect(
         client.updateBillerSettings({ clusters: 'not-an-array' as any })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty bill id in sendPaymentReminder', async () => {
+      await expect(
+        client.sendPaymentReminder('', { message: 'Reminder' })
       ).rejects.toThrow(ValidationError);
     });
   });
