@@ -1,5 +1,27 @@
 ## Changelog
 
+### 1.6.0 (2026-09-08)
+
+**New Features:**
+- Added Hold Payment (Escrow) support for managing held payments
+- Added `listEscrows` method to list all held payments (escrows) for your account with optional status filter
+- Added `getEscrow` method to retrieve a single escrow/holding by its ID
+- Added `pullEscrowFunds` method to pull funds from a funded escrow to your balance
+- Added Pay Merchant (Direct Pay) support for configuring and testing direct payment settings
+- Added `getDirectPaySettings` method to retrieve current Pay Merchant settings
+- Added `updateDirectPaySettings` method to update Pay Merchant settings with customer validation configuration
+- Added `testDirectPaySettings` method to test Pay Merchant validation configuration
+- Added `EscrowStatus` enum (funded, withdrawing, withdrawn, released, cancelled)
+- Added `Escrow` interface for hold payment details
+- Added `DirectPaySettings` interface for Pay Merchant configuration
+- Added comprehensive types: ListEscrowsRequest, ListEscrowsResponse, PullEscrowFundsResponse, GetDirectPaySettingsResponse, UpdateDirectPaySettingsRequest, TestDirectPaySettingsRequest, TestDirectPaySettingsResponse
+- Added validators for all Hold Payment and Pay Merchant requests with status validation, timeout validation, and URL validation
+
+**Improvements:**
+- Updated documentation with usage examples for Hold Payment and Pay Merchant features
+- Added integration tests for Hold Payment and Pay Merchant endpoints
+- Enhanced developer guide with webhook event details for escrows and direct pay
+
 ### 1.5.0 (2026-08-22)
 
 **New Features:**

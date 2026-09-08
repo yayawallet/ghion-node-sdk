@@ -59,10 +59,19 @@ export type {
   GenerateBillIdResponse,
   InitiateCheckoutResponse,
   Penalty,
+  Escrow,
+  ListEscrowsRequest,
+  ListEscrowsResponse,
+  PullEscrowFundsResponse,
+  DirectPaySettings,
+  GetDirectPaySettingsResponse,
+  UpdateDirectPaySettingsRequest,
+  TestDirectPaySettingsRequest,
+  TestDirectPaySettingsResponse,
 } from './types';
 
 // Enums
-export { PaymentStatus, WebhookEventType, BillStatus } from './types';
+export { PaymentStatus, WebhookEventType, BillStatus, EscrowStatus } from './types';
 
 // Errors
 export {

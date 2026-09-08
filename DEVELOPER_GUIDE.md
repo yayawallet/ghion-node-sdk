@@ -695,6 +695,175 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
 });
 ```
 
+### 6. Hold Payment (Escrow) Integration
+
+Hold Payment lets your customers set aside funds for your business until you're ready to collect. When you pull the funds, they're credited to your Ghion balance immediately.
+
+**Note:** This feature requires enablement by Ghion support. Contact Ghion support to enable Hold Payment for your account.
+
+#### List Held Payments
+
+Retrieve all held payments (escrows) for your account. You can filter by status.
+
+```javascript
+// List all escrows
+const allEscrows = await client.listEscrows();
+console.log(`Found ${allEscrows.escrows.length} escrows`);
+
+// List only funded escrows
+const fundedEscrows = await client.listEscrows({ status: EscrowStatus.Funded });
+console.log(`Found ${fundedEscrows.escrows.length} funded escrows`);
+```
+
+**Escrow Statuses:**
+- `EscrowStatus.Funded` - Customer has funded the holding (you can pull funds)
+- `EscrowStatus.Withdrawing` - Customer is withdrawing funds back to wallet
+- `EscrowStatus.Withdrawn` - Funds were returned to customer's wallet
+- `EscrowStatus.Released` - Funds were credited to your balance
+- `EscrowStatus.Cancelled` - Customer cancelled the holding
+
+#### Get Escrow Details
+
+Retrieve a single escrow by its ID.
+
+```javascript
+const escrow = await client.getEscrow('escrow-id');
+console.log(`Escrow ID: ${escrow.id}`);
+console.log(`Amount: ${escrow.amount} ${escrow.currency}`);
+console.log(`Status: ${escrow.status}`);
+console.log(`Wallet: ${escrow.wallet_name} (${escrow.wallet_phone})`);
+console.log(`Purpose: ${escrow.purpose}`);
+```
+
+#### Pull Funds
+
+When a customer has funded a holding, you can pull the funds to your balance at any time. The holding must be in `funded` status.
+
+```javascript
+const result = await client.pullEscrowFunds('escrow-id');
+console.log(`Funds pulled successfully`);
+console.log(`Status: ${result.status}`);
+console.log(`Released at: ${result.released_at}`);
+```
+
+#### Webhook Events
+
+Ghion sends webhook notifications for escrow lifecycle events:
+
+- `escrow.funded` - Customer funded a holding
+- `escrow.released` - Funds credited to your balance
+- `escrow.withdrawing` - Customer started withdrawing funds
+- `escrow.withdrawn` - Withdrawal completed
+- `escrow.cancelling` - Customer started cancelling
+- `escrow.cancelled` - Cancellation completed
+- `escrow.failed` - Withdrawal/cancellation failed
+
+### 7. Pay Merchant (Direct Pay) Integration
+
+Pay Merchant lets wallet users pay your business directly by entering their customer ID and an optional reference. Funds settle to your balance immediately.
+
+**Note:** This feature requires enablement by Ghion support. Contact Ghion support to enable Pay Merchant for your account.
+
+#### Get Direct Pay Settings
+
+Retrieve current Pay Merchant configuration.
+
+```javascript
+const settings = await client.getDirectPaySettings();
+console.log(`Configured: ${settings.configured}`);
+console.log(`Customer ID Required: ${settings.settings.customer_id_required}`);
+console.log(`Reference Required: ${settings.settings.reference_required}`);
+console.log(`Validation Adapter: ${settings.settings.validation_adapter}`);
+```
+
+#### Update Direct Pay Settings
+
+Configure Pay Merchant settings programmatically.
+
+```javascript
+const updated = await client.updateDirectPaySettings({
+  customer_id_required: true,
+  reference_required: true,
+  validation_adapter: 'http',
+  validation_strict: true,
+  validation_url: 'https://api.yourbusiness.com/validate-customer',
+  validation_api_key: 'your-secret-key',
+  validation_customer_name_path: 'data.name',
+  validation_reference_valid_path: 'data.valid',
+  validation_timeout: 10,
+});
+```
+
+**Configuration Fields:**
+- `customer_id_required` - Require customers to enter their customer ID
+- `reference_required` - Require customers to enter a reference/bill ID
+- `validation_adapter` - Set to `'http'` to enable customer validation
+- `validation_strict` - Block payment if validation fails (vs showing warning)
+- `validation_url` - Your validation API endpoint URL
+- `validation_method` - HTTP method: `'POST'` or `'GET'`
+- `validation_api_key` - Shared secret sent as auth header
+- `validation_auth_header` - Header name for the API key
+- `validation_customer_name_path` - Dot-notation path to customer name in response
+- `validation_reference_valid_path` - Dot-notation path to reference validity
+- `validation_timeout` - Timeout in seconds (1-60)
+
+#### Test Direct Pay Settings
+
+Test your validation configuration before going live.
+
+```javascript
+const testResult = await client.testDirectPaySettings({
+  customer_id: 'C-1001',
+  reference: 'INV-2026-001',
+});
+console.log(`Validation Performed: ${testResult.validation_performed}`);
+console.log(`Customer Name: ${testResult.customer_name}`);
+console.log(`Reference Valid: ${testResult.reference_valid}`);
+console.log(`Error: ${testResult.error}`);
+```
+
+#### Customer Validation API
+
+When `validation_adapter` is set to `'http'`, Ghion calls your validation API before payment. This lets you:
+- Look up customer's full name and display it in payment summary
+- Validate reference/bill ID before accepting payment
+- Block invalid payments (strict mode) or show warning (non-strict mode)
+
+**Request from Ghion to your API:**
+```json
+POST https://api.yourbusiness.com/validate-customer
+X-Api-Key: your-secret-key
+{
+  "customer_id": "C-1001",
+  "reference": "INV-2026-001"
+}
+```
+
+**Your API response:**
+```json
+{
+  "customer_name": "Abebe Bekele",
+  "reference_valid": true,
+  "reference": "INV-2026-001",
+  "amount": 250.00
+}
+```
+
+#### Webhook Events
+
+Pay Merchant payments trigger the standard `transaction.completed` webhook with additional metadata:
+
+```javascript
+case WebhookEventType.TRANSACTION_COMPLETED:
+  if (event.data.metadata?.source === 'direct_pay') {
+    console.log('Direct Pay payment received');
+    console.log('Customer ID:', event.data.metadata.customer_id);
+    console.log('Reference:', event.data.metadata.reference);
+    console.log('Validated Customer:', event.data.metadata.validated_customer_name);
+  }
+  break;
+```
+
 ---
 
 ## Best Practices

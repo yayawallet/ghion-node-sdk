@@ -273,4 +273,75 @@ describe('GhionClient Integration Tests', () => {
       }
     }, 15000);
   });
+
+  describe('Hold Payment (Escrow)', () => {
+    it('should list escrows', async () => {
+      try {
+        const escrows = await client.listEscrows();
+        expect(escrows).toBeDefined();
+        expect(Array.isArray(escrows.escrows)).toBe(true);
+      } catch (e: any) {
+        // May fail if module not enabled (403 error)
+        if (e.statusCode === 403) {
+          console.warn('Hold Payment module not enabled for this account');
+        } else {
+          throw e;
+        }
+      }
+    }, 15000);
+
+    it('should list escrows with status filter', async () => {
+      try {
+        const escrows = await client.listEscrows({ status: 'funded' as any });
+        expect(escrows).toBeDefined();
+        expect(Array.isArray(escrows.escrows)).toBe(true);
+      } catch (e: any) {
+        // May fail if module not enabled (403 error)
+        if (e.statusCode === 403) {
+          console.warn('Hold Payment module not enabled for this account');
+        } else {
+          throw e;
+        }
+      }
+    }, 15000);
+  });
+
+  describe('Pay Merchant (Direct Pay)', () => {
+    it('should get direct pay settings', async () => {
+      try {
+        const settings = await client.getDirectPaySettings();
+        expect(settings).toBeDefined();
+        expect(typeof settings.configured).toBe('boolean');
+      } catch (e: any) {
+        // May fail if module not enabled (403 error)
+        if (e.statusCode === 403) {
+          console.warn('Pay Merchant module not enabled for this account');
+        } else {
+          throw e;
+        }
+      }
+    }, 15000);
+
+    it('should test direct pay settings if validation is configured', async () => {
+      try {
+        const settings = await client.getDirectPaySettings();
+        if (settings.configured && settings.settings.validation_adapter === 'http') {
+          const testResult = await client.testDirectPaySettings({
+            customer_id: 'TEST-123',
+            reference: 'INV-001',
+          });
+          expect(testResult).toBeDefined();
+        } else {
+          console.warn('Direct Pay validation not configured, skipping test');
+        }
+      } catch (e: any) {
+        // May fail if module not enabled (403 error)
+        if (e.statusCode === 403) {
+          console.warn('Pay Merchant module not enabled for this account');
+        } else {
+          throw e;
+        }
+      }
+    }, 15000);
+  });
 });
