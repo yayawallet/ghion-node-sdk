@@ -643,3 +643,114 @@ export interface InitiateCheckoutResponse {
   currency: string;
   checkout_url: string;
 }
+
+/**
+ * Hold Payment (Escrow) types
+ */
+
+export enum EscrowStatus {
+  Funded = 'funded',
+  Withdrawing = 'withdrawing',
+  Withdrawn = 'withdrawn',
+  Released = 'released',
+  Cancelled = 'cancelled',
+}
+
+export interface Escrow {
+  id: string;
+  merchant_id: string;
+  wallet_id: string;
+  wallet_phone: string;
+  wallet_name: string;
+  amount: string;
+  currency: string;
+  status: EscrowStatus;
+  purpose: string;
+  mode: string;
+  created_at: string;
+  released_at: string | null;
+  withdrawn_at: string | null;
+  cancelled_at: string | null;
+  released_by: string | null;
+  cancelled_by: string | null;
+  withdrawal_bank_reference: string | null;
+  withdrawal_fee_amount: string | null;
+}
+
+export interface ListEscrowsRequest {
+  status?: EscrowStatus;
+}
+
+export interface ListEscrowsResponse {
+  escrows: Escrow[];
+}
+
+export interface PullEscrowFundsResponse {
+  id: string;
+  status: EscrowStatus;
+  amount: string;
+  currency: string;
+  released_at: string;
+  released_by: string | null;
+}
+
+/**
+ * Pay Merchant (Direct Pay) types
+ */
+
+export interface DirectPaySettings {
+  customer_id_required: boolean;
+  reference_required: boolean;
+  validation_adapter: 'none' | 'http';
+  validation_strict: boolean;
+  validation_url: string | null;
+  validation_method: 'POST' | 'GET';
+  validation_api_key: string | null;
+  validation_auth_header: string;
+  validation_request_template: string | null;
+  validation_customer_name_path: string;
+  validation_reference_valid_path: string;
+  validation_reference_path: string;
+  validation_amount_path: string;
+  validation_error_path: string;
+  validation_timeout: number;
+}
+
+export interface GetDirectPaySettingsResponse {
+  configured: boolean;
+  settings: DirectPaySettings;
+}
+
+export interface UpdateDirectPaySettingsRequest {
+  customer_id_required?: boolean;
+  reference_required?: boolean;
+  validation_adapter?: 'none' | 'http';
+  validation_strict?: boolean;
+  validation_url?: string | null;
+  validation_method?: 'POST' | 'GET';
+  validation_api_key?: string | null;
+  validation_auth_header?: string;
+  validation_request_template?: string | null;
+  validation_customer_name_path?: string;
+  validation_reference_valid_path?: string;
+  validation_reference_path?: string;
+  validation_amount_path?: string;
+  validation_error_path?: string;
+  validation_timeout?: number;
+  [key: string]: unknown;
+}
+
+export interface TestDirectPaySettingsRequest {
+  customer_id: string;
+  reference?: string;
+  [key: string]: unknown;
+}
+
+export interface TestDirectPaySettingsResponse {
+  validation_performed: boolean;
+  customer_name: string | null;
+  reference_valid: boolean | null;
+  reference: string | null;
+  amount: number | null;
+  error: string | null;
+}

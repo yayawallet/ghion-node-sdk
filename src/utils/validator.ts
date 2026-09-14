@@ -1,5 +1,5 @@
 import { ValidationError } from '../errors';
-import { InitializePaymentRequest, SubmitPaymentRequest, CreateBillRequest, BulkCreateBillsRequest, ListBillsRequest, PublicBillLookupRequest, RecordManualPaymentRequest, BillerSettingsRequest, SendPaymentReminderRequest } from '../types';
+import { InitializePaymentRequest, SubmitPaymentRequest, CreateBillRequest, BulkCreateBillsRequest, ListBillsRequest, PublicBillLookupRequest, RecordManualPaymentRequest, BillerSettingsRequest, SendPaymentReminderRequest, ListEscrowsRequest, UpdateDirectPaySettingsRequest, TestDirectPaySettingsRequest, EscrowStatus } from '../types';
 
 /**
  * Helper function to validate non-empty strings
@@ -297,4 +297,46 @@ function isValidEmail(email: string): boolean {
  */
 export function validateSendPaymentReminderRequest(data: SendPaymentReminderRequest): void {
   requireStringIfPresent(data.message, 'Message');
+}
+
+/**
+ * Validate escrow ID
+ */
+export function validateEscrowId(id: string): void {
+  requireNonEmptyString(id, 'Escrow ID');
+}
+
+/**
+ * Validate list escrows request
+ */
+export function validateListEscrowsRequest(data: ListEscrowsRequest): void {
+  if (data.status !== undefined && !Object.values(EscrowStatus).includes(data.status)) {
+    throw new ValidationError(`Invalid escrow status. Must be one of: ${Object.values(EscrowStatus).join(', ')}`, 'status', data.status);
+  }
+}
+
+/**
+ * Validate update direct pay settings request
+ */
+export function validateUpdateDirectPaySettingsRequest(data: UpdateDirectPaySettingsRequest): void {
+  if (data.validation_timeout !== undefined) {
+    if (typeof data.validation_timeout !== 'number' || data.validation_timeout < 1 || data.validation_timeout > 60) {
+      throw new ValidationError('Validation timeout must be between 1 and 60 seconds', 'validation_timeout', data.validation_timeout);
+    }
+  }
+
+  if (data.validation_adapter === 'http') {
+    if (!data.validation_url) {
+      throw new ValidationError('Validation URL is required when validation_adapter is "http"', 'validation_url', data.validation_url);
+    }
+    requireStringIfPresent(data.validation_url, 'Validation URL');
+  }
+}
+
+/**
+ * Validate test direct pay settings request
+ */
+export function validateTestDirectPaySettingsRequest(data: TestDirectPaySettingsRequest): void {
+  requireNonEmptyString(data.customer_id, 'Customer ID');
+  requireStringIfPresent(data.reference, 'Reference');
 }

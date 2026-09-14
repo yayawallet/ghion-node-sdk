@@ -230,6 +230,42 @@ describe('GhionClient', () => {
         client.sendPaymentReminder('', { message: 'Reminder' })
       ).rejects.toThrow(ValidationError);
     });
+
+    it('should throw ValidationError for empty escrow id in getEscrow', async () => {
+      await expect(
+        client.getEscrow('')
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty escrow id in pullEscrowFunds', async () => {
+      await expect(
+        client.pullEscrowFunds('')
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for invalid escrow status in listEscrows', async () => {
+      await expect(
+        client.listEscrows({ status: 'invalid' as any })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for invalid validation timeout in updateDirectPaySettings', async () => {
+      await expect(
+        client.updateDirectPaySettings({ validation_timeout: 0 })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for validation URL required when adapter is http', async () => {
+      await expect(
+        client.updateDirectPaySettings({ validation_adapter: 'http', validation_url: null })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw ValidationError for empty customer_id in testDirectPaySettings', async () => {
+      await expect(
+        client.testDirectPaySettings({ customer_id: '' })
+      ).rejects.toThrow(ValidationError);
+    });
   });
 
   describe('API Request Handling', () => {

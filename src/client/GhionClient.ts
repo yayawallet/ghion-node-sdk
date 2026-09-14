@@ -28,6 +28,10 @@ import {
   validateBillerSettingsRequest,
   validateBillDashboardRequest,
   validateSendPaymentReminderRequest,
+  validateEscrowId,
+  validateListEscrowsRequest,
+  validateUpdateDirectPaySettingsRequest,
+  validateTestDirectPaySettingsRequest,
 } from '../utils/validator';
 import {
   InitializePaymentRequest,
@@ -61,6 +65,14 @@ import {
   SendPaymentReminderResponse,
   GenerateBillIdResponse,
   InitiateCheckoutResponse,
+  Escrow,
+  ListEscrowsRequest,
+  ListEscrowsResponse,
+  PullEscrowFundsResponse,
+  GetDirectPaySettingsResponse,
+  UpdateDirectPaySettingsRequest,
+  TestDirectPaySettingsRequest,
+  TestDirectPaySettingsResponse,
 } from '../types';
 
 /**
@@ -639,6 +651,75 @@ export class GhionClient {
     }
     
     return redacted;
+  }
+
+  /**
+   * Hold Payment (Escrow) Methods
+   */
+
+  /**
+   * List all held payments (escrows) for your account
+   * @param request - Optional filter by status
+   * @returns List of escrows
+   */
+  async listEscrows(request?: ListEscrowsRequest): Promise<ListEscrowsResponse> {
+    if (request) {
+      validateListEscrowsRequest(request);
+    }
+    const queryParams = request?.status ? `?status=${request.status}` : '';
+    return this.apiRequest<ListEscrowsResponse>('GET', `/dashboard/escrows${queryParams}`);
+  }
+
+  /**
+   * Get a single escrow/holding by its ID
+   * @param id - The escrow ID
+   * @returns Escrow details
+   */
+  async getEscrow(id: string): Promise<Escrow> {
+    validateEscrowId(id);
+    return this.apiRequest<Escrow>('GET', `/dashboard/escrows/${id}`);
+  }
+
+  /**
+   * Pull funds from a funded escrow to your balance
+   * @param id - The escrow ID
+   * @returns Pull response with updated status
+   */
+  async pullEscrowFunds(id: string): Promise<PullEscrowFundsResponse> {
+    validateEscrowId(id);
+    return this.apiRequest<PullEscrowFundsResponse>('POST', `/dashboard/escrows/${id}/pull`);
+  }
+
+  /**
+   * Pay Merchant (Direct Pay) Methods
+   */
+
+  /**
+   * Get current Pay Merchant settings
+   * @returns Direct Pay settings
+   */
+  async getDirectPaySettings(): Promise<GetDirectPaySettingsResponse> {
+    return this.apiRequest<GetDirectPaySettingsResponse>('GET', '/dashboard/direct-pay/settings');
+  }
+
+  /**
+   * Update Pay Merchant settings
+   * @param request - Settings to update
+   * @returns Updated settings
+   */
+  async updateDirectPaySettings(request: UpdateDirectPaySettingsRequest): Promise<GetDirectPaySettingsResponse> {
+    validateUpdateDirectPaySettingsRequest(request);
+    return this.apiRequest<GetDirectPaySettingsResponse>('PUT', '/dashboard/direct-pay/settings', request);
+  }
+
+  /**
+   * Test Pay Merchant validation configuration
+   * @param request - Test customer ID and optional reference
+   * @returns Validation test result
+   */
+  async testDirectPaySettings(request: TestDirectPaySettingsRequest): Promise<TestDirectPaySettingsResponse> {
+    validateTestDirectPaySettingsRequest(request);
+    return this.apiRequest<TestDirectPaySettingsResponse>('POST', '/dashboard/direct-pay/settings/test', request);
   }
 
 }
